@@ -6,8 +6,7 @@
 import mx from 'mxgraph';
 
 const mxgraph = mx({
-  mxImageBasePath: "../../src/images",
-  mxBasePath: "../../src"
+  mxBasePath: '/static/mxgraph'
 });
 
 const {
@@ -42,16 +41,12 @@ export default {
 }
 </script>
 
-<style scoped>
-  html, body {
-    height: 100%;
-  }
-
+<style>
   #graphContainer {
     position: relative;
     overflow: hidden;
-    width: 100%;
-    height: 100%;
+    width: 500px;
+    height: 500px;
     background: url('../assets/grid.gif');
     cursor: default;
   }
