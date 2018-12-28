@@ -1,113 +1,58 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <h2>Essential Links</h2>
-    <ul>
-      <li>
-        <a
-          href="https://vuejs.org"
-          target="_blank"
-        >
-          Core Docs
-        </a>
-      </li>
-      <li>
-        <a
-          href="https://forum.vuejs.org"
-          target="_blank"
-        >
-          Forum
-        </a>
-      </li>
-      <li>
-        <a
-          href="https://chat.vuejs.org"
-          target="_blank"
-        >
-          Community Chat
-        </a>
-      </li>
-      <li>
-        <a
-          href="https://twitter.com/vuejs"
-          target="_blank"
-        >
-          Twitter
-        </a>
-      </li>
-      <br>
-      <li>
-        <a
-          href="http://vuejs-templates.github.io/webpack/"
-          target="_blank"
-        >
-          Docs for This Template
-        </a>
-      </li>
-    </ul>
-    <h2>Ecosystem</h2>
-    <ul>
-      <li>
-        <a
-          href="http://router.vuejs.org/"
-          target="_blank"
-        >
-          vue-router
-        </a>
-      </li>
-      <li>
-        <a
-          href="http://vuex.vuejs.org/"
-          target="_blank"
-        >
-          vuex
-        </a>
-      </li>
-      <li>
-        <a
-          href="http://vue-loader.vuejs.org/"
-          target="_blank"
-        >
-          vue-loader
-        </a>
-      </li>
-      <li>
-        <a
-          href="https://github.com/vuejs/awesome-vue"
-          target="_blank"
-        >
-          awesome-vue
-        </a>
-      </li>
-    </ul>
-  </div>
+  <div id="graphContainer"></div>
 </template>
 
 <script>
+import mx from 'mxgraph';
+
+const mxgraph = mx({
+  mxImageBasePath: "../../src/images",
+  mxBasePath: "../../src"
+});
+
+const {
+  mxGraph,
+  mxEvent,
+  mxRubberband,
+} = mxgraph;
+
 export default {
   name: 'HelloWorld',
-  data () {
-    return {
-      msg: 'Welcome to Your Vue.js App'
+  methods: {
+    test(container) {
+      // 禁用鼠标右键
+      mxEvent.disableContextMenu(container);
+      const graph = new mxGraph(container);
+      // 开启区域选择
+      new mxRubberband(graph);
+      const parent = graph.getDefaultParent();
+      graph.getModel().beginUpdate();
+      try {
+        const v1 = graph.insertVertex(parent, null, 'Hello,', 20, 20, 80, 30);
+        const v2 = graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
+        const e1 = graph.insertEdge(parent, null, '30%', v1, v2);
+      } finally {
+        graph.getModel().endUpdate();
+      }
     }
+  },
+  mounted() {
+    this.test(document.getElementById('graphContainer'));
   }
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h1, h2 {
-  font-weight: normal;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
+  html, body {
+    height: 100%;
+  }
+
+  #graphContainer {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    background: url('../assets/grid.gif');
+    cursor: default;
+  }
 </style>
