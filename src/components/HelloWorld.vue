@@ -1,5 +1,34 @@
 <template>
-  <div id="graphContainer"></div>
+  <ElContainer>
+    <ElMain>
+      <div id="graphContainer"></div>
+      <ElSelect
+        v-show="showSelector"
+        class="icon-selector"
+        v-model="selectIcon">
+        <ElOption
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value">
+        </ElOption>
+      </ElSelect>
+    </ElMain>
+    <ElAside width="300px">
+      <div id="graphOutline"></div>
+      <div class="element-panel">
+        <div style="text-align: center"
+             v-for="(element,idx) in elements"
+             :key="idx">
+          <img
+            class="element-img"
+            :src="'../assets/'+element.icon"
+            alt="">
+          <p>{{ element.name }}</p>
+        </div>
+      </div>
+    </ElAside>
+  </ElContainer>
 </template>
 
 <script>
@@ -26,33 +55,34 @@ const {
 
 export default {
   name: 'HelloWorld',
+
+  data() {
+    return {
+      showSelector: true,
+      selectIcon: '',
+      options: [],
+      elements: [{
+        icon: 'ele-001.jpg',
+        name: '比卡丘',
+      }, {
+        icon: 'ele-002.jpg',
+        name: '也是比卡丘',
+      }, {
+        icon: 'ele-003.jpg',
+        name: '小火龙',
+      }]
+    }
+  },
+
   methods: {
-    test(container) {
-      // 禁用鼠标右键
-      mxEvent.disableContextMenu(container);
+    configPorts(graph) {
       // Replaces the port image
       mxConstraintHandler.prototype.pointImage = new mxImage('/static/mxgraph/images/dot.gif', 10, 10);
-      const graph = new mxGraph(container);
-      graph.setConnectable(true);
       // ????
       // Disables automatic handling of ports. This disables the reset of the
       // respective style in mxGraph.cellConnected. Note that this feature may
       // be useful if floating and fixed connections are combined.
       graph.setPortsEnabled(false);
-
-      // Connect preview
-      // 拖拽过程出现折线预览
-      graph.connectionHandler.createEdgeState = function (me) {
-        const edge = graph.createEdge(null, null, null, null, null, 'edgeStyle=orthogonalEdgeStyle');
-        return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge));
-      };
-
-      // 开启区域选择
-      new mxRubberband(graph);
-      // 禁止从图形中心拉出线条
-      graph.connectionHandler.isConnectableCell = () => false;
-      // 90度正交连线样式
-      graph.getStylesheet().getDefaultEdgeStyle()['edgeStyle'] = 'orthogonalEdgeStyle';
 
       // Ports are equal for all shapes...
       const ports = [];
@@ -151,15 +181,95 @@ export default {
 
         return graphGetConnectionPoint.apply(this, arguments);
       };
+    },
+    configOrthogonalEdge(graph) {
+      // 90度正交连线样式
+      graph.getStylesheet().getDefaultEdgeStyle()['edgeStyle'] = 'orthogonalEdgeStyle';
+      // Connect preview
+      // 拖拽过程出现折线预览
+      graph.connectionHandler.createEdgeState = function (me) {
+        const edge = graph.createEdge(null, null, null, null, null, 'edgeStyle=orthogonalEdgeStyle');
+        return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge));
+      };
+    },
+    configNodeStyle(graph) {
+      const style = {
+        [mxConstants.STYLE_SHAPE]: mxConstants.SHAPE_LABEL,
+        [mxConstants.STYLE_PERIMETER]: mxPerimeter.RectanglePerimeter,
+        [mxConstants.STYLE_ROUNDED]: true,
+        [mxConstants.STYLE_ARCSIZE]: 6,// 设置圆角程度
 
-      const parent = graph.getDefaultParent();
-      graph.getModel().beginUpdate();
-      try {
-        graph.insertVertex(parent, null, 'Hello,', 20, 20, 80, 30);
-        graph.insertVertex(parent, null, 'World!', 200, 150, 80, 30);
-      } finally {
-        graph.getModel().endUpdate();
-      }
+        [mxConstants.STYLE_STROKECOLOR]: '#ebb862',
+        [mxConstants.STYLE_FONTCOLOR]: '#333333',
+        [mxConstants.STYLE_FILLCOLOR]: '#FFFFFF',
+        [mxConstants.STYLE_LABEL_BACKGROUNDCOLOR]: '#e6e6e6',
+
+        [mxConstants.STYLE_ALIGN]: mxConstants.ALIGN_CENTER,
+        [mxConstants.STYLE_VERTICAL_ALIGN]: mxConstants.ALIGN_TOP,
+        [mxConstants.STYLE_IMAGE_ALIGN]: mxConstants.ALIGN_CENTER,
+        [mxConstants.STYLE_IMAGE_VERTICAL_ALIGN]: mxConstants.ALIGN_TOP,
+
+        [mxConstants.STYLE_IMAGE]: 'images/other/pika.jpg',
+        [mxConstants.STYLE_IMAGE_WIDTH]: '100',
+        [mxConstants.STYLE_IMAGE_HEIGHT]: '100',
+        [mxConstants.STYLE_SPACING_TOP]: '110',
+        [mxConstants.STYLE_SPACING]: '8'
+      };
+
+      graph.getStylesheet().putCellStyle('node', style);
+    },
+    configDrag(graph) {
+      // 判断drop是否有效
+      const dropGraph = function (evt) {
+        const x = mxEvent.getClientX(evt);
+        const y = mxEvent.getClientY(evt);
+        // 获取 x,y 所在的元素
+        const elt = document.elementFromPoint(x, y);
+        // 如果鼠标落在graph容器
+        if (mxUtils.isAncestorNode(graph.container, elt)) {
+          return graph;
+        }
+        // 鼠标落在其他地方
+        return null;
+      };
+
+      // drop成功后新建一个节点
+      const dropSuccessCb = function (graph, evt, target, x, y) {
+        const cell = new mxCell('Test', new mxGeometry(0, 0, 120, 150), 'node');
+        cell.vertex = true;
+        const cells = graph.importCells([cell], x, y, target);
+        if (cells != null && cells.length > 0) {
+          graph.setSelectionCells(cells);
+        }
+      };
+
+      // Creates the element that is being for the actual preview.
+      const dragElt = document.createElement('div');
+      dragElt.style.border = 'dashed black 1px';
+      dragElt.style.width = '120px';
+      dragElt.style.height = '40px';
+
+      const elements = document.getElementsByClassName('element-img');
+      Array.from(elements).forEach((ele) => {
+        mxUtils.makeDraggable(ele, dropGraph, dropSuccessCb, dragElt, null, null, graph.autoscroll, true);
+      });
+    },
+    test(container) {
+      // 禁用鼠标右键
+      mxEvent.disableContextMenu(container);
+      const graph = new mxGraph(container);
+      graph.setConnectable(true);
+      // 开启区域选择
+      new mxRubberband(graph);
+      // 禁止从图形中心拉出线条
+      graph.connectionHandler.isConnectableCell = () => false;
+      // 鹰眼图
+      new mxOutline(graph, document.getElementById('graphOutline'));
+
+      this.configPorts(graph);
+      this.configNodeStyle(graph);
+      this.configOrthogonalEdge(graph);
+      this.configDrag(graph);
     }
   },
   mounted() {
@@ -168,7 +278,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
   #graphContainer {
     position: relative;
     overflow: hidden;
@@ -176,5 +286,29 @@ export default {
     height: 80vh;
     background: url('../assets/grid.gif');
     cursor: default;
+  }
+
+  #graphOutline {
+    height: 300px;
+    overflow: hidden;
+    background: transparent;
+    border: 1px solid #000;
+  }
+
+  .icon-selector {
+
+  }
+
+  .element-panel {
+
+  }
+
+  .element-img {
+    border-radius: 4px;
+    border: 1px solid #ebb862;
+    margin-right: 20px;
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
   }
 </style>
