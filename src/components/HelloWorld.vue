@@ -5,7 +5,8 @@
       <ElSelect
         v-show="showSelector"
         class="icon-selector"
-        v-model="selectIcon">
+        :value="selectIcon"
+        @input="handleSelectIcon">
         <ElOption
           v-for="item in options"
           :key="item.value"
@@ -41,6 +42,7 @@ const mxgraph = mx({
 
 const {
   mxCell,
+  mxCellOverlay,
   mxConstants,
   mxCellState,
   mxConstraintHandler,
@@ -64,9 +66,20 @@ export default {
 
   data() {
     return {
+      graph: {},
       showSelector: false,
       selectIcon: '',
-      options: [],
+      activeCell: {},
+      options: [{
+        value: 'icon-001.png',
+        label: '牛',
+      }, {
+        value: 'icon-002.png',
+        label: '狮',
+      }, {
+        value: 'icon-003.png',
+        label: '虎',
+      }],
       elements: [{
         icon: 'ele-001.jpg',
         name: '比卡丘',
@@ -81,6 +94,11 @@ export default {
   },
 
   methods: {
+    handleSelectIcon(icon) {
+      this.graph.removeCellOverlays(this.activeCell);
+      this.graph.addCellOverlay(this.activeCell, this.genOverlay(`/static/${icon}`));
+      this.showSelector = false;
+    },
     configPorts(graph) {
       // Replaces the port image
       mxConstraintHandler.prototype.pointImage = new mxImage('/static/mxgraph/images/dot.gif', 10, 10);
@@ -224,6 +242,24 @@ export default {
 
       graph.getStylesheet().putCellStyle('node', style);
     },
+    genOverlay(src) {
+      const facOverlay = () => {
+        return new mxCellOverlay(
+          new mxImage(src, 20, 20),
+          null,
+          mxConstants.ALIGN_LEFT,
+          mxConstants.ALIGN_TOP,
+          new mxPoint(16, 16),
+          'pointer');
+      };
+
+      const overlay = facOverlay();
+      overlay.addListener(mxEvent.CLICK, (sender, evt) => {
+        this.activeCell = evt.getProperty('cell');
+        this.showSelector = true;
+      });
+      return overlay;
+    },
     configDrag(graph) {
       // 判断drop是否有效
       const dropGraph = function (evt) {
@@ -240,12 +276,15 @@ export default {
       };
 
       const addDrag = (ele) => {
+        const vm = this;
         // drop成功后新建一个节点
-        const dropSuccessCb = function (graph, evt, target, x, y) {
+        const dropSuccessCb = (graph, evt, target, x, y) => {
+          // 这个作用域内 this 就是 ele 的包装对象
           const src = ele.getAttribute('src');
           const name = ele.getAttribute('name');
           const cell = new mxCell(name, new mxGeometry(0, 0, 120, 150), `node;image=${src}`);
           cell.vertex = true;
+          graph.addCellOverlay(cell, vm.genOverlay('/static/icon-001.png'));
           const cells = graph.importCells([cell], x, y, target);
           if (cells != null && cells.length > 0) {
             graph.setSelectionCells(cells);
@@ -268,6 +307,7 @@ export default {
       // 禁用鼠标右键
       mxEvent.disableContextMenu(container);
       const graph = new mxGraph(container);
+      this.graph = graph;
       graph.setConnectable(true);
       // 开启区域选择
       new mxRubberband(graph);
