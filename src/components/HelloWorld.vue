@@ -14,16 +14,17 @@
         </ElOption>
       </ElSelect>
     </ElMain>
-    <ElAside width="300px">
+    <ElAside width="400px" style="padding-right: 20px;">
       <div id="graphOutline"></div>
       <div class="element-panel">
-        <div style="text-align: center"
+        <div style="text-align: center;cursor: pointer"
              v-for="(element,idx) in elements"
              :key="idx">
           <img
+            v-bind="element"
             class="element-img"
-            :src="'../assets/'+element.icon"
-            alt="">
+            :src="'/static/'+element.icon"
+            alt="element">
           <p>{{ element.name }}</p>
         </div>
       </div>
@@ -39,17 +40,22 @@ const mxgraph = mx({
 });
 
 const {
+  mxCell,
   mxConstants,
   mxCellState,
   mxConstraintHandler,
   mxConnectionConstraint,
   mxEdgeHandler,
   mxEvent,
+  mxGeometry,
   mxGraph,
   mxImage,
+  mxOutline,
+  mxPerimeter,
   mxPoint,
   mxRubberband,
   mxShape,
+  mxUtils,
 } = mxgraph;
 
 
@@ -58,17 +64,17 @@ export default {
 
   data() {
     return {
-      showSelector: true,
+      showSelector: false,
       selectIcon: '',
       options: [],
       elements: [{
         icon: 'ele-001.jpg',
         name: '比卡丘',
       }, {
-        icon: 'ele-002.jpg',
+        icon: 'ele-002.jpeg',
         name: '也是比卡丘',
       }, {
-        icon: 'ele-003.jpg',
+        icon: 'ele-003.png',
         name: '小火龙',
       }]
     }
@@ -233,14 +239,20 @@ export default {
         return null;
       };
 
-      // drop成功后新建一个节点
-      const dropSuccessCb = function (graph, evt, target, x, y) {
-        const cell = new mxCell('Test', new mxGeometry(0, 0, 120, 150), 'node');
-        cell.vertex = true;
-        const cells = graph.importCells([cell], x, y, target);
-        if (cells != null && cells.length > 0) {
-          graph.setSelectionCells(cells);
-        }
+      const addDrag = (ele) => {
+        // drop成功后新建一个节点
+        const dropSuccessCb = function (graph, evt, target, x, y) {
+          const src = ele.getAttribute('src');
+          const name = ele.getAttribute('name');
+          const cell = new mxCell(name, new mxGeometry(0, 0, 120, 150), `node;image=${src}`);
+          cell.vertex = true;
+          const cells = graph.importCells([cell], x, y, target);
+          if (cells != null && cells.length > 0) {
+            graph.setSelectionCells(cells);
+          }
+        };
+
+        mxUtils.makeDraggable(ele, dropGraph, dropSuccessCb, dragElt, null, null, graph.autoscroll, true);
       };
 
       // Creates the element that is being for the actual preview.
@@ -250,9 +262,7 @@ export default {
       dragElt.style.height = '40px';
 
       const elements = document.getElementsByClassName('element-img');
-      Array.from(elements).forEach((ele) => {
-        mxUtils.makeDraggable(ele, dropGraph, dropSuccessCb, dragElt, null, null, graph.autoscroll, true);
-      });
+      Array.from(elements).forEach(addDrag);
     },
     test(container) {
       // 禁用鼠标右键
@@ -282,7 +292,7 @@ export default {
   #graphContainer {
     position: relative;
     overflow: hidden;
-    width: 100vh;
+    width: 100%;
     height: 80vh;
     background: url('../assets/grid.gif');
     cursor: default;
@@ -300,15 +310,15 @@ export default {
   }
 
   .element-panel {
-
+    display: flex;
+    margin-top: 20px;
+    justify-content: space-between;
   }
 
   .element-img {
     border-radius: 4px;
     border: 1px solid #ebb862;
-    margin-right: 20px;
     width: 100px;
     height: 100px;
-    cursor: pointer;
   }
 </style>
