@@ -223,12 +223,12 @@ export default {
       style[mxConstants.STYLE_ENTRY_Y] = 0; // top
       style[mxConstants.STYLE_ENTRY_PERIMETER] = 0; // disabled
       // Disable the following for straight lines
-      style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom;
+      style[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ORTHOGONAL;
 
       // Connect preview
       // 拖拽过程出现折线预览
       graph.connectionHandler.createEdgeState = function (me) {
-        const edge = graph.createEdge(null, null, null, null, null, 'edgeStyle=orthogonalEdgeStyle');
+        const edge = graph.createEdge();
         return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge));
       };
     },
