@@ -14,6 +14,7 @@
           :value="item.value">
         </ElOption>
       </ElSelect>
+      <ElButton @click="exportXML">View XML</ElButton>
     </ElMain>
     <ElAside width="400px" style="padding-right: 20px;">
       <div id="graphOutline"></div>
@@ -47,6 +48,7 @@ const {
   mxCellState,
   mxConstraintHandler,
   mxConnectionConstraint,
+  mxCodec,
   mxEdgeHandler,
   mxEvent,
   mxGeometry,
@@ -58,6 +60,7 @@ const {
   mxRubberband,
   mxShape,
   mxUtils,
+  mxEdgeStyle,
 } = mxgraph;
 
 
@@ -101,6 +104,7 @@ export default {
     },
     configPorts(graph) {
       // Replaces the port image
+      // 可选样式 images/handle-main.png
       mxConstraintHandler.prototype.pointImage = new mxImage('/static/mxgraph/images/dot.gif', 10, 10);
       // ????
       // Disables automatic handling of ports. This disables the reset of the
@@ -208,7 +212,19 @@ export default {
     },
     configOrthogonalEdge(graph) {
       // 90度正交连线样式
-      graph.getStylesheet().getDefaultEdgeStyle()['edgeStyle'] = 'orthogonalEdgeStyle';
+      // graph.getStylesheet().getDefaultEdgeStyle()['edgeStyle'] = 'orthogonalEdgeStyle';
+      const style = graph.getStylesheet().getDefaultEdgeStyle();
+      style[mxConstants.STYLE_ROUNDED] = true;
+      style[mxConstants.STYLE_STROKEWIDTH] = 3;
+      style[mxConstants.STYLE_EXIT_X] = 0.5; // center
+      style[mxConstants.STYLE_EXIT_Y] = 1.0; // bottom
+      style[mxConstants.STYLE_EXIT_PERIMETER] = 0; // disabled
+      style[mxConstants.STYLE_ENTRY_X] = 0.5; // center
+      style[mxConstants.STYLE_ENTRY_Y] = 0; // top
+      style[mxConstants.STYLE_ENTRY_PERIMETER] = 0; // disabled
+      // Disable the following for straight lines
+      style[mxConstants.STYLE_EDGE] = mxEdgeStyle.TopToBottom;
+
       // Connect preview
       // 拖拽过程出现折线预览
       graph.connectionHandler.createEdgeState = function (me) {
@@ -291,6 +307,8 @@ export default {
           }
         };
 
+        // preview 修改查看 schema.html
+        // 禁止编辑线段文本 查看 userobject
         mxUtils.makeDraggable(ele, dropGraph, dropSuccessCb, dragElt, null, null, graph.autoscroll, true);
       };
 
@@ -303,12 +321,24 @@ export default {
       const elements = document.getElementsByClassName('element-img');
       Array.from(elements).forEach(addDrag);
     },
+    exportXML() {
+      const encoder = new mxCodec();
+      const node = encoder.encode(this.graph.getModel());
+      mxUtils.popup(mxUtils.getPrettyXml(node), true);
+    },
     test(container) {
       // 禁用鼠标右键
       mxEvent.disableContextMenu(container);
       const graph = new mxGraph(container);
       this.graph = graph;
       graph.setConnectable(true);
+      // Optional disabling of sizing
+      graph.setCellsResizable(false);
+      // Configures the graph contains to resize and
+      // add a border at the bottom, right
+      // graph.setResizeContainer(true);
+      // graph.minimumContainerSize = new mxRectangle(0, 0, 500, 380);
+      // graph.setBorder(60);
       // 开启区域选择
       new mxRubberband(graph);
       // 禁止从图形中心拉出线条
