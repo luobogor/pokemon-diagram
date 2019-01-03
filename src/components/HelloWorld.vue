@@ -298,8 +298,11 @@ export default {
           // 这个作用域内 this 就是 ele 的包装对象
           const src = ele.getAttribute('src');
           const name = ele.getAttribute('name');
-          const cell = new mxCell(name, new mxGeometry(0, 0, 120, 150), `node;image=${src}`);
+          const cell = new mxCell(name, new mxGeometry(0, 0, 120, 165), `node;image=${src}`);
           cell.vertex = true;
+
+          const nameField = graph.insertVertex(cell, null, 'Name', 0.15, 0.8, 80, 16, null, true);
+
           graph.addCellOverlay(cell, vm.genOverlay('/static/icon-001.png'));
           const cells = graph.importCells([cell], x, y, target);
           if (cells != null && cells.length > 0) {
@@ -334,6 +337,8 @@ export default {
       graph.setConnectable(true);
       // Optional disabling of sizing
       graph.setCellsResizable(false);
+      graph.setAllowLoops(false);
+      graph.setDisconnectOnMove(false);
       // Configures the graph contains to resize and
       // add a border at the bottom, right
       // graph.setResizeContainer(true);
@@ -350,9 +355,82 @@ export default {
       this.configNodeStyle(graph);
       this.configOrthogonalEdge(graph);
       this.configDrag(graph);
-    }
+      this.listenEvent(graph);
+      this.handleConnect(graph);
+    },
+    handleConnect(graph) {
+      // graph.setAllowDanglingEdges(false);
+
+      // 暂时当作添加edge事件使用
+      graph.addEdge = function (edge, parent, source, target, index) {
+        if (target == null) {
+          return null;
+        }
+
+        this.model.beginUpdate();
+        try {
+          return mxGraph.prototype.addEdge.apply(this, arguments); // "supercall"
+        } finally {
+          this.model.endUpdate();
+        }
+
+        return null;
+      };
+
+
+      // 配置是否可连接
+      // graph.isCellConnectable = function (cell, terminal, source) {
+      //   return true;
+      // };
+    },
+    listenEvent(graph) {
+      // graph.addListener(mxEvent.DISCONNECT, function (sender, evt) {
+      //   console.log(evt.name);
+      // });
+      graph.addListener(mxEvent.CELLS_MOVED, function (sender, evt) {
+        console.log(evt.name);
+      });
+      // 当作改变edge锚点事件使用
+      // 两个节点第一次连接线条时不会触发该事件
+      // 以后每次更改线条锚点都会触发该事件
+      graph.addListener(mxEvent.CONNECT_CELL, function (sender, evt) {
+        console.log('mxEvent.CONNECT_CELL');
+        const edge = evt.getProperty('edge');
+        if (!edge.target || !edge.source) {
+          graph.removeCells([edge])
+        }
+      });
+
+      // 删除edge,node事件
+      graph.addListener(mxEvent.CELLS_REMOVED, function (sender, evt) {
+        console.log(evt.name);
+      });
+
+      // graph.addListener(mxEvent.CELL_CONNECTED, function (sender, evt) {});
+      graph.addListener(mxEvent.ADD_CELLS, function (sender, evt) {
+        console.log(evt.name);
+      });
+
+      graph.addListener(mxEvent.LABEL_CHANGED, function (sender, evt) {
+        console.log(evt.name);
+      });
+
+      graph.addListener(mxEvent.START_EDITING, function (sender, evt) {
+        console.log(evt.name);
+
+      });
+      graph.addListener(mxEvent.EDITING_STARTED, function (sender, evt) {
+        console.log(evt.name);
+
+      });
+      graph.addListener(mxEvent.EDITING_STOPPED, function (sender, evt) {
+        console.log(evt.name);
+      });
+    },
   },
   mounted() {
+    // 查看 Permission 例子设置允许操作
+    // 查看 hovericons 例子鼠标悬浮
     this.test(document.getElementById('graphContainer'));
   }
 }
