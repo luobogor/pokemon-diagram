@@ -15,6 +15,7 @@
         </ElOption>
       </ElSelect>
       <ElButton @click="exportXML">View XML</ElButton>
+      <ElButton @click="autoLayout">Auto Layout</ElButton>
     </ElMain>
     <ElAside width="400px" style="padding-right: 20px;">
       <div id="graphOutline"></div>
@@ -46,20 +47,125 @@ const {
   mxCellOverlay,
   mxConstants,
   mxCellState,
+  mxCodec,
   mxEdgeHandler,
   mxEvent,
+  mxHierarchicalLayout,
+  mxRadialTreeLayout,
   mxGeometry,
   mxGraph,
   mxGraphHandler,
   mxImage,
+  mxMorphing,
   mxOutline,
   mxPerimeter,
   mxPoint,
-  mxRubberband,
+  mxRectangle,
   mxUtils,
   mxEdgeStyle,
+  mxHierarchicalEdgeStyle,
 } = mxgraph;
 
+
+class mxIconSet {
+  constructor(state) {
+    this.images = [];
+    const graph = state.view.graph;
+
+    const arrowTop = mxUtils.createImage('/static/arrow.png');
+    arrowTop.setAttribute('title', 'NewEdge');
+    arrowTop.style.position = 'absolute';
+    arrowTop.style.cursor = 'pointer';
+    arrowTop.style.width = '30px';
+    arrowTop.style.height = '30px';
+    arrowTop.style.left = (state.x + state.width / 2 - 15) + 'px';
+    arrowTop.style.top = (state.y + state.height) + 10 + 'px';
+
+    mxEvent.addGestureListeners(arrowTop,
+      mxUtils.bind(this, function (evt) {
+        const pt = mxUtils.convertPoint(graph.container,
+          mxEvent.getClientX(evt), mxEvent.getClientY(evt));
+        graph.connectionHandler.start(state, pt.x, pt.y);
+        graph.isMouseDown = true;
+        graph.isMouseTrigger = mxEvent.isMouseEvent(evt);
+        mxEvent.consume(evt);
+      })
+    );
+    state.view.graph.container.appendChild(arrowTop);
+    this.images.push(arrowTop);
+  }
+
+  destroy() {
+    this.images.forEach((img) => {
+      img.parentNode.removeChild(img);
+    });
+    this.images = null;
+  };
+}
+
+function configHoverIcon(graph) {
+  // 悬浮热区大小
+  const iconTolerance = 60;
+  // Shows icons if the mouse is over a cell
+  graph.addMouseListener({
+    currentState: null,
+    currentIconSet: null,
+    mouseDown(sender, me) {
+      // Hides icons on mouse down
+      if (this.currentState != null) {
+        this.dragLeave(me.getEvent(), this.currentState);
+        this.currentState = null;
+      }
+    },
+    mouseMove(sender, me) {
+      if (this.currentState != null && (me.getState() == this.currentState ||
+        me.getState() == null)) {
+        const tol = iconTolerance;
+        const tmp = new mxRectangle(me.getGraphX() - tol,
+          me.getGraphY() - tol, 2 * tol, 2 * tol);
+
+        if (mxUtils.intersects(tmp, this.currentState)) {
+          return;
+        }
+      }
+
+      let tmp = graph.view.getState(me.getCell());
+
+      // Ignores everything but vertices
+      if (graph.isMouseDown || (tmp != null && !graph.getModel().isVertex(tmp.cell))) {
+        tmp = null;
+      }
+
+      if (tmp !== this.currentState) {
+        if (tmp != null && graph.isPart(tmp.cell)) {
+          return;
+        }
+
+        if (this.currentState != null) {
+          this.dragLeave(me.getEvent(), this.currentState);
+        }
+
+        this.currentState = tmp;
+
+        if (this.currentState != null) {
+          this.dragEnter(me.getEvent(), this.currentState);
+        }
+      }
+    },
+    mouseUp(sender, me) {},
+    dragEnter(evt, state) {
+      if (this.currentIconSet == null) {
+        this.currentIconSet = new mxIconSet(state);
+      }
+    },
+    dragLeave(evt, state) {
+      if (this.currentIconSet != null) {
+        this.currentIconSet.destroy();
+        this.currentIconSet = null;
+      }
+    },
+  });
+}
 
 /**
  * Redirects start drag to parent.
@@ -67,7 +173,6 @@ const {
 const graphHandlerGetInitialCellForEvent = mxGraphHandler.prototype.getInitialCellForEvent;
 mxGraphHandler.prototype.getInitialCellForEvent = function (me) {
   let cell = graphHandlerGetInitialCellForEvent.apply(this, arguments);
-
   if (this.graph.isPart(cell)) {
     cell = this.graph.getModel().getParent(cell)
   }
@@ -78,9 +183,9 @@ mxGraphHandler.prototype.getInitialCellForEvent = function (me) {
 function configConstituent(graph) {
   // Helper method to mark parts with constituent=1 in the style
   graph.isPart = function (cell) {
-    var state = this.view.getState(cell);
-    var style = (state != null) ? state.style : this.getCellStyle(cell);
-    return style['constituent'] == '1';
+    const state = this.view.getState(cell);
+    const style = (state != null) ? state.style : this.getCellStyle(cell);
+    return style.constituent === 1;
   };
   // Redirects selection to parent
   graph.selectCellForEvent = function (cell, e) {
@@ -93,6 +198,8 @@ function configConstituent(graph) {
     mxGraph.prototype.selectCellForEvent.apply(this, arguments);
   };
 }
+
+let layout = null;
 
 export default {
   name: 'HelloWorld',
@@ -127,6 +234,24 @@ export default {
   },
 
   methods: {
+    autoLayout() {
+      const { graph } = this;
+      const parent = graph.getDefaultParent();
+      graph.getModel().beginUpdate();
+      try {
+        layout.execute(parent);
+      } catch (e) {
+        throw e;
+      } finally {
+        // 变形动画
+        // Default values are 6, 1.5, 20
+        const morph = new mxMorphing(graph, 10, 1.7, 20);
+        morph.addListener(mxEvent.DONE, () => {
+          graph.getModel().endUpdate();
+        });
+        morph.startAnimation();
+      }
+    },
     handleSelectIcon(icon) {
       this.graph.removeCellOverlays(this.activeCell);
       this.graph.addCellOverlay(this.activeCell, this.genOverlay(`/static/${icon}`));
@@ -228,7 +353,8 @@ export default {
           const cell = new mxCell('Name', new mxGeometry(0, 0, 120, 165), `node;image=${src}`);
           cell.vertex = true;
 
-          graph.insertVertex(cell, null, name, 0.15, 0.7, 80, 16, 'constituent=1;whiteSpace=wrap;strokeColor=none;fillColor=none;', true);
+          const title = graph.insertVertex(cell, null, name, 0.15, 0.7, 80, 16, 'constituent=1;whiteSpace=wrap;', true);
+          title.setConnectable(false);
 
           graph.addCellOverlay(cell, vm.genOverlay('/static/icon-001.png'));
           const cells = graph.importCells([cell], x, y, target);
@@ -261,6 +387,11 @@ export default {
       mxEvent.disableContextMenu(container);
       const graph = new mxGraph(container);
       this.graph = graph;
+      layout = new mxHierarchicalLayout(graph);
+      mxHierarchicalLayout.prototype.disableEdgeStyle = false;
+      mxHierarchicalLayout.prototype.edgeStyle = 3;
+
+      console.log(mxHierarchicalLayout.prototype.edgeStyle);
       graph.setConnectable(true);
       // Optional disabling of sizing
       graph.setCellsResizable(false);
@@ -276,13 +407,12 @@ export default {
       // graph.setResizeContainer(true);
       // graph.minimumContainerSize = new mxRectangle(0, 0, 500, 380);
       // graph.setBorder(60);
-      // 开启区域选择
-      new mxRubberband(graph);
       // 禁止从图形中心拉出线条
-      graph.connectionHandler.isConnectableCell = () => false;
+      // graph.connectionHandler.isConnectableCell = () => false;
+
       // 鹰眼图
       new mxOutline(graph, document.getElementById('graphOutline'));
-
+      configHoverIcon(graph);
       configConstituent(graph);
       this.configNodeStyle(graph);
       this.configOrthogonalEdge(graph);
@@ -291,8 +421,6 @@ export default {
       this.handleConnect(graph);
     },
     handleConnect(graph) {
-      // graph.setAllowDanglingEdges(false);
-
       // 暂时当作添加edge事件使用
       graph.addEdge = function (edge, parent, source, target, index) {
         if (target == null) {
