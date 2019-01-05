@@ -46,9 +46,6 @@ const {
   mxCellOverlay,
   mxConstants,
   mxCellState,
-  mxConstraintHandler,
-  mxConnectionConstraint,
-  mxCodec,
   mxEdgeHandler,
   mxEvent,
   mxGeometry,
@@ -59,7 +56,6 @@ const {
   mxPerimeter,
   mxPoint,
   mxRubberband,
-  mxShape,
   mxUtils,
   mxEdgeStyle,
 } = mxgraph;
@@ -87,9 +83,11 @@ function configConstituent(graph) {
     return style['constituent'] == '1';
   };
   // Redirects selection to parent
-  graph.selectCellForEvent = function (cell) {
+  graph.selectCellForEvent = function (cell, e) {
     if (this.isPart(cell)) {
-      cell = this.model.getParent(cell);
+      const parentCell = this.model.getParent(cell);
+      mxGraph.prototype.selectCellForEvent.call(this, parentCell, e);
+      return;
     }
 
     mxGraph.prototype.selectCellForEvent.apply(this, arguments);
