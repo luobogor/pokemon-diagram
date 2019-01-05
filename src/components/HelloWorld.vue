@@ -53,6 +53,7 @@ const {
   mxEvent,
   mxGeometry,
   mxGraph,
+  mxGraphHandler,
   mxImage,
   mxOutline,
   mxPerimeter,
@@ -102,128 +103,25 @@ export default {
       this.graph.addCellOverlay(this.activeCell, this.genOverlay(`/static/${icon}`));
       this.showSelector = false;
     },
-    configPorts(graph) {
-      // Replaces the port image
-      // 可选样式 images/handle-main.png
-      mxConstraintHandler.prototype.pointImage = new mxImage('/static/mxgraph/images/dot.gif', 10, 10);
-      // ????
-      // Disables automatic handling of ports. This disables the reset of the
-      // respective style in mxGraph.cellConnected. Note that this feature may
-      // be useful if floating and fixed connections are combined.
-      graph.setPortsEnabled(false);
-
-      // Ports are equal for all shapes...
-      const ports = [];
-      // NOTE: Constraint is used later for orthogonal edge routing (currently ignored)
-      ports['w'] = { x: 0, y: 0.5, perimeter: true, constraint: 'west' };
-      ports['e'] = { x: 1, y: 0.5, perimeter: true, constraint: 'east' };
-      ports['n'] = { x: 0.5, y: 0, perimeter: true, constraint: 'north' };
-      ports['s'] = { x: 0.5, y: 1, perimeter: true, constraint: 'south' };
-      ports['nw'] = { x: 0, y: 0, perimeter: true, constraint: 'north west' };
-      ports['ne'] = { x: 1, y: 0, perimeter: true, constraint: 'north east' };
-      ports['sw'] = { x: 0, y: 1, perimeter: true, constraint: 'south west' };
-      ports['se'] = { x: 1, y: 1, perimeter: true, constraint: 'south east' };
-      // 框架内部调用 vertex.shape.getPorts()
-      mxShape.prototype.getPorts = () => ports;
-      // Disables floating connections (only connections via ports allowed)
-      graph.connectionHandler.isConnectableCell = () => false;
-      mxEdgeHandler.prototype.isConnectableCell = (cell) => graph.connectionHandler.isConnectableCell(cell);
-
-      // Disables existing port functionality ??
-      graph.view.getTerminalPort = function (state, terminal, source) {
-        return terminal;
-      };
-
-      // Returns all possible ports for a given terminal
-      graph.getAllConnectionConstraints = function (terminal, source) {
-        if (terminal != null && terminal.shape != null &&
-          terminal.shape.stencil != null) {
-          // for stencils with existing constraints...
-          if (terminal.shape.stencil != null) {
-            return terminal.shape.stencil.constraints;
-          }
-        } else if (terminal != null && this.model.isVertex(terminal.cell)) {
-          if (terminal.shape != null) {
-            const ports = terminal.shape.getPorts();
-            const cstrs = [];
-
-            for (var id in ports) {
-              var port = ports[id];
-
-              var cstr = new mxConnectionConstraint(new mxPoint(port.x, port.y), port.perimeter);
-              cstr.id = id;
-              cstrs.push(cstr);
-            }
-
-            return cstrs;
-          }
-        }
-
-        return null;
-      };
-
-      // update 时调用
-      // Sets the port for the given connection
-      graph.setConnectionConstraint = function (edge, terminal, source, constraint) {
-        if (constraint != null) { // 连线刚好连线到端点
-          const key = (source) ? mxConstants.STYLE_SOURCE_PORT : mxConstants.STYLE_TARGET_PORT;
-
-          if (constraint == null || constraint.id == null) {
-            this.setCellStyles(key, null, [edge]);
-          } else if (constraint.id != null) {
-            this.setCellStyles(key, constraint.id, [edge]);
-          }
-        }
-      };
-
-      // endUpdate 时调用
-      // Returns the port for the given connection
-      graph.getConnectionConstraint = function (edge, terminal, source) {
-        const key = (source) ? mxConstants.STYLE_SOURCE_PORT : mxConstants.STYLE_TARGET_PORT;
-        const id = edge.style[key];
-
-        if (id != null) {
-          const c = new mxConnectionConstraint(null, null);
-          c.id = id;
-
-          return c;
-        }
-
-        return null;
-      };
-
-      // Returns the actual point for a port by redirecting the constraint to the port
-      const graphGetConnectionPoint = graph.getConnectionPoint;
-      graph.getConnectionPoint = function (vertex, constraint) {
-        // constraint 是从 getConnectionConstraint 中获取
-        if (constraint.id != null && vertex != null && vertex.shape != null) {
-          const port = vertex.shape.getPorts()[constraint.id];
-
-          if (port != null) {
-            return graphGetConnectionPoint.call(
-              this,
-              vertex,
-              new mxConnectionConstraint(new mxPoint(port.x, port.y), port.perimeter));
-          }
-        }
-
-        return graphGetConnectionPoint.apply(this, arguments);
-      };
-    },
     configOrthogonalEdge(graph) {
       // 90度正交连线样式
       // graph.getStylesheet().getDefaultEdgeStyle()['edgeStyle'] = 'orthogonalEdgeStyle';
+      // const style = graph.getStylesheet().getDefaultEdgeStyle();
+      // style[mxConstants.STYLE_ROUNDED] = true;
+      // style[mxConstants.STYLE_STROKEWIDTH] = 3;
+      // style[mxConstants.STYLE_EXIT_X] = 0.5; // center
+      // style[mxConstants.STYLE_EXIT_Y] = 1.0; // bottom
+      // style[mxConstants.STYLE_EXIT_PERIMETER] = 0; // disabled
+      // style[mxConstants.STYLE_ENTRY_X] = 0.5; // center
+      // style[mxConstants.STYLE_ENTRY_Y] = 0; // top
+      // style[mxConstants.STYLE_ENTRY_PERIMETER] = 0; // disabled
+      // // Disable the following for straight lines
+      // style[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ORTHOGONAL;
+
       const style = graph.getStylesheet().getDefaultEdgeStyle();
       style[mxConstants.STYLE_ROUNDED] = true;
-      style[mxConstants.STYLE_STROKEWIDTH] = 3;
-      style[mxConstants.STYLE_EXIT_X] = 0.5; // center
-      style[mxConstants.STYLE_EXIT_Y] = 1.0; // bottom
-      style[mxConstants.STYLE_EXIT_PERIMETER] = 0; // disabled
-      style[mxConstants.STYLE_ENTRY_X] = 0.5; // center
-      style[mxConstants.STYLE_ENTRY_Y] = 0; // top
-      style[mxConstants.STYLE_ENTRY_PERIMETER] = 0; // disabled
-      // Disable the following for straight lines
-      style[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ORTHOGONAL;
+      style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
+      graph.alternateEdgeStyle = 'elbow=vertical';
 
       // Connect preview
       // 拖拽过程出现折线预览
@@ -253,7 +151,8 @@ export default {
         [mxConstants.STYLE_IMAGE_WIDTH]: '100',
         [mxConstants.STYLE_IMAGE_HEIGHT]: '100',
         [mxConstants.STYLE_SPACING_TOP]: '110',
-        [mxConstants.STYLE_SPACING]: '8'
+        [mxConstants.STYLE_SPACING]: '8',
+        [mxConstants.STYLE_WHITE_SPACE]:'wrap',
       };
 
       graph.getStylesheet().putCellStyle('node', style);
@@ -339,6 +238,11 @@ export default {
       graph.setCellsResizable(false);
       graph.setAllowLoops(false);
       graph.setDisconnectOnMove(false);
+      graph.foldingEnabled = false;
+      // 智能调整靶点位置
+      mxGraphHandler.prototype.guidesEnabled = true;
+      mxEdgeHandler.prototype.snapToTerminals = true;
+      graph.setHtmlLabels(true);
       // Configures the graph contains to resize and
       // add a border at the bottom, right
       // graph.setResizeContainer(true);
@@ -347,11 +251,10 @@ export default {
       // 开启区域选择
       new mxRubberband(graph);
       // 禁止从图形中心拉出线条
-      graph.connectionHandler.isConnectableCell = () => false;
+      // graph.connectionHandler.isConnectableCell = () => false;
       // 鹰眼图
       new mxOutline(graph, document.getElementById('graphOutline'));
 
-      this.configPorts(graph);
       this.configNodeStyle(graph);
       this.configOrthogonalEdge(graph);
       this.configDrag(graph);
@@ -430,7 +333,13 @@ export default {
   },
   mounted() {
     // 查看 Permission 例子设置允许操作
-    // 查看 hovericons 例子鼠标悬浮
+    // 查看 hovericons 例子鼠标悬浮,查看touchf、contexticons 激活节点布局, touch 还有手势放大缩小功能
+    // 查看 second label 例子修改节点布局
+    // preview 修改查看 schema.html
+    // 禁止编辑线段文本 查看 userobject
+    // pagebreaks.html resetview
+    // mxClient 提供各种判断当前客户端环境的工具函数
+    // state.secondLabel.wrap = true; 文本换行包裹
     this.test(document.getElementById('graphContainer'));
   }
 }
