@@ -65,6 +65,37 @@ const {
 } = mxgraph;
 
 
+/**
+ * Redirects start drag to parent.
+ */
+const graphHandlerGetInitialCellForEvent = mxGraphHandler.prototype.getInitialCellForEvent;
+mxGraphHandler.prototype.getInitialCellForEvent = function (me) {
+  let cell = graphHandlerGetInitialCellForEvent.apply(this, arguments);
+
+  if (this.graph.isPart(cell)) {
+    cell = this.graph.getModel().getParent(cell)
+  }
+
+  return cell;
+};
+
+function configConstituent(graph) {
+  // Helper method to mark parts with constituent=1 in the style
+  graph.isPart = function (cell) {
+    var state = this.view.getState(cell);
+    var style = (state != null) ? state.style : this.getCellStyle(cell);
+    return style['constituent'] == '1';
+  };
+  // Redirects selection to parent
+  graph.selectCellForEvent = function (cell) {
+    if (this.isPart(cell)) {
+      cell = this.model.getParent(cell);
+    }
+
+    mxGraph.prototype.selectCellForEvent.apply(this, arguments);
+  };
+}
+
 export default {
   name: 'HelloWorld',
 
@@ -86,7 +117,7 @@ export default {
       }],
       elements: [{
         icon: 'ele-001.jpg',
-        name: '比卡丘',
+        name: 'pi ka qiu pi ka qiu',// 演示文本换行
       }, {
         icon: 'ele-002.jpeg',
         name: '也是比卡丘',
@@ -150,9 +181,8 @@ export default {
         [mxConstants.STYLE_IMAGE]: 'images/other/pika.jpg',
         [mxConstants.STYLE_IMAGE_WIDTH]: '100',
         [mxConstants.STYLE_IMAGE_HEIGHT]: '100',
-        [mxConstants.STYLE_SPACING_TOP]: '110',
+        [mxConstants.STYLE_SPACING_TOP]: '130', // 文字到顶部距离
         [mxConstants.STYLE_SPACING]: '8',
-        [mxConstants.STYLE_WHITE_SPACE]:'wrap',
       };
 
       graph.getStylesheet().putCellStyle('node', style);
@@ -197,10 +227,10 @@ export default {
           // 这个作用域内 this 就是 ele 的包装对象
           const src = ele.getAttribute('src');
           const name = ele.getAttribute('name');
-          const cell = new mxCell(name, new mxGeometry(0, 0, 120, 165), `node;image=${src}`);
+          const cell = new mxCell('Name', new mxGeometry(0, 0, 120, 165), `node;image=${src}`);
           cell.vertex = true;
 
-          const nameField = graph.insertVertex(cell, null, 'Name', 0.15, 0.8, 80, 16, null, true);
+          graph.insertVertex(cell, null, name, 0.15, 0.7, 80, 16, 'constituent=1;whiteSpace=wrap;strokeColor=none;fillColor=none;', true);
 
           graph.addCellOverlay(cell, vm.genOverlay('/static/icon-001.png'));
           const cells = graph.importCells([cell], x, y, target);
@@ -251,10 +281,11 @@ export default {
       // 开启区域选择
       new mxRubberband(graph);
       // 禁止从图形中心拉出线条
-      // graph.connectionHandler.isConnectableCell = () => false;
+      graph.connectionHandler.isConnectableCell = () => false;
       // 鹰眼图
       new mxOutline(graph, document.getElementById('graphOutline'));
 
+      configConstituent(graph);
       this.configNodeStyle(graph);
       this.configOrthogonalEdge(graph);
       this.configDrag(graph);
@@ -279,17 +310,8 @@ export default {
 
         return null;
       };
-
-
-      // 配置是否可连接
-      // graph.isCellConnectable = function (cell, terminal, source) {
-      //   return true;
-      // };
     },
     listenEvent(graph) {
-      // graph.addListener(mxEvent.DISCONNECT, function (sender, evt) {
-      //   console.log(evt.name);
-      // });
       graph.addListener(mxEvent.CELLS_MOVED, function (sender, evt) {
         console.log(evt.name);
       });
@@ -332,6 +354,7 @@ export default {
     },
   },
   mounted() {
+    // mxConstant 查看默认样式
     // 查看 Permission 例子设置允许操作
     // 查看 hovericons 例子鼠标悬浮,查看touchf、contexticons 激活节点布局, touch 还有手势放大缩小功能
     // 查看 second label 例子修改节点布局
