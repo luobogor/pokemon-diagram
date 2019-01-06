@@ -70,7 +70,6 @@ class mxIconSet {
   constructor(state) {
     this.images = [];
     const graph = state.view.graph;
-
     const arrowTop = mxUtils.createImage('/static/arrow.png');
     arrowTop.setAttribute('title', 'NewEdge');
     arrowTop.style.position = 'absolute';
@@ -102,7 +101,7 @@ class mxIconSet {
   };
 }
 
-function configHoverIcon(graph) {
+function configHoverIcon() {
   // 悬浮热区大小
   const iconTolerance = 60;
   // Shows icons if the mouse is over a cell
@@ -179,7 +178,7 @@ mxGraphHandler.prototype.getInitialCellForEvent = function (me) {
   return cell;
 };
 
-function configConstituent(graph) {
+function configConstituent() {
   // Helper method to mark parts with constituent=1 in the style
   graph.isPart = function (cell) {
     const state = this.view.getState(cell);
@@ -198,13 +197,20 @@ function configConstituent(graph) {
   };
 }
 
-function configConstraint(graph) {
+function configConstraint() {
   // mxConstants.DEFAULT_HOTSPOT = 0.1;
   // 使用 0 px 的图像覆盖原来的中心拖拽
   mxConnectionHandler.prototype.connectImage = new mxImage('', 0, 0);
 }
 
+let graph = null;
 let layout = null;
+
+function configAutoLayout() {
+  layout = new mxHierarchicalLayout(graph);
+  mxHierarchicalLayout.prototype.disableEdgeStyle = false;
+  mxHierarchicalLayout.prototype.edgeStyle = 3;
+}
 
 export default {
   name: 'HelloWorld',
@@ -240,7 +246,6 @@ export default {
 
   methods: {
     autoLayout() {
-      const { graph } = this;
       const parent = graph.getDefaultParent();
       graph.getModel().beginUpdate();
       try {
@@ -258,8 +263,8 @@ export default {
       }
     },
     handleSelectIcon(icon) {
-      this.graph.removeCellOverlays(this.activeCell);
-      this.graph.addCellOverlay(this.activeCell, this.genOverlay(`/static/${icon}`));
+      graph.removeCellOverlays(this.activeCell);
+      graph.addCellOverlay(this.activeCell, this.genOverlay(`/static/${icon}`));
       this.showSelector = false;
     },
     configOrthogonalEdge(graph) {
@@ -277,6 +282,9 @@ export default {
       // // Disable the following for straight lines
       // style[mxConstants.STYLE_EDGE] = mxConstants.EDGESTYLE_ORTHOGONAL;
 
+      // 禁止拖动线条
+      mxGraph.prototype.isCellMovable = cell => !cell.edge;
+
       const style = graph.getStylesheet().getDefaultEdgeStyle();
       style[mxConstants.STYLE_ROUNDED] = true;
       style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
@@ -289,7 +297,7 @@ export default {
         return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge));
       };
     },
-    configNodeStyle(graph) {
+    configNodeStyle() {
       const style = {
         [mxConstants.STYLE_SHAPE]: mxConstants.SHAPE_LABEL,
         [mxConstants.STYLE_PERIMETER]: mxPerimeter.RectanglePerimeter,
@@ -384,24 +392,23 @@ export default {
     },
     exportXML() {
       const encoder = new mxCodec();
-      const node = encoder.encode(this.graph.getModel());
+      const node = encoder.encode(graph.getModel());
       mxUtils.popup(mxUtils.getPrettyXml(node), true);
     },
     test(container) {
       // 禁用鼠标右键
       mxEvent.disableContextMenu(container);
-      const graph = new mxGraph(container);
-      this.graph = graph;
-      layout = new mxHierarchicalLayout(graph);
-      mxHierarchicalLayout.prototype.disableEdgeStyle = false;
-      mxHierarchicalLayout.prototype.edgeStyle = 3;
-
+      graph = new mxGraph(container);
       console.log(mxHierarchicalLayout.prototype.edgeStyle);
       graph.setConnectable(true);
       // Optional disabling of sizing
       graph.setCellsResizable(false);
       graph.setAllowLoops(false);
+      // 禁止游离线条
       graph.setDisconnectOnMove(false);
+      // 禁止调整线条弯曲度
+      graph.setCellsBendable(false);
+
       graph.foldingEnabled = false;
       mxGraphHandler.prototype.guidesEnabled = true;
       // 智能调整靶点位置
@@ -415,9 +422,10 @@ export default {
 
       // 鹰眼图
       new mxOutline(graph, document.getElementById('graphOutline'));
-      configConstraint(graph);
-      configHoverIcon(graph);
-      configConstituent(graph);
+      configAutoLayout();
+      configConstraint();
+      configHoverIcon();
+      configConstituent();
       this.configNodeStyle(graph);
       this.configOrthogonalEdge(graph);
       this.configDrag(graph);
