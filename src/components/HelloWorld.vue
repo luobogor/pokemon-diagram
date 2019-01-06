@@ -37,6 +37,7 @@
 
 <script>
 import mx from 'mxgraph';
+import _ from 'lodash';
 
 const mxgraph = mx({
   mxBasePath: '/static/mxgraph'
@@ -210,6 +211,15 @@ function configAutoLayout() {
   layout = new mxHierarchicalLayout(graph);
   mxHierarchicalLayout.prototype.disableEdgeStyle = false;
   mxHierarchicalLayout.prototype.edgeStyle = 3;
+}
+
+function listenActiveEvent() {
+  graph.getSelectionModel().addListener(mxEvent.CHANGE, (selectModel, e) => {
+    if (!selectModel.cells.length) {
+      return;
+    }
+    graph.orderCells(false, selectModel.cells);
+  });
 }
 
 export default {
@@ -399,7 +409,7 @@ export default {
       // 禁用鼠标右键
       mxEvent.disableContextMenu(container);
       graph = new mxGraph(container);
-      console.log(mxHierarchicalLayout.prototype.edgeStyle);
+      listenActiveEvent();
       graph.setConnectable(true);
       // Optional disabling of sizing
       graph.setCellsResizable(false);
@@ -429,8 +439,8 @@ export default {
       this.configNodeStyle(graph);
       this.configOrthogonalEdge(graph);
       this.configDrag(graph);
-      this.listenEvent(graph);
       this.handleConnect(graph);
+      this.listenEvent();
     },
     handleConnect(graph) {
       // 暂时当作添加edge事件使用
@@ -449,7 +459,7 @@ export default {
         return null;
       };
     },
-    listenEvent(graph) {
+    listenEvent() {
       graph.addListener(mxEvent.CELLS_MOVED, function (sender, evt) {
         console.log(evt.name);
       });
@@ -457,11 +467,18 @@ export default {
       // 两个节点第一次连接线条时不会触发该事件
       // 以后每次更改线条锚点都会触发该事件
       graph.addListener(mxEvent.CONNECT_CELL, function (sender, evt) {
-        console.log('mxEvent.CONNECT_CELL');
         const edge = evt.getProperty('edge');
         if (!edge.target || !edge.source) {
           graph.removeCells([edge])
         }
+      });
+      // 线条连接后将层级设置到最低
+      graph.addListener(mxEvent.CELL_CONNECTED, (sender, e) => {
+        const edge = e.getProperty('edge');
+        console.log('mxEvent.CELL_CONNECTED');
+        setTimeout(() => {
+          graph.orderCells(true, [edge]);
+        }, 0);
       });
 
       // 删除edge,node事件
