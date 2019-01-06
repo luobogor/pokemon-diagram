@@ -47,11 +47,11 @@ const {
   mxCellOverlay,
   mxConstants,
   mxCellState,
+  mxConnectionHandler,
   mxCodec,
   mxEdgeHandler,
   mxEvent,
   mxHierarchicalLayout,
-  mxRadialTreeLayout,
   mxGeometry,
   mxGraph,
   mxGraphHandler,
@@ -63,7 +63,6 @@ const {
   mxRectangle,
   mxUtils,
   mxEdgeStyle,
-  mxHierarchicalEdgeStyle,
 } = mxgraph;
 
 
@@ -197,6 +196,12 @@ function configConstituent(graph) {
 
     mxGraph.prototype.selectCellForEvent.apply(this, arguments);
   };
+}
+
+function configConstraint(graph) {
+  // mxConstants.DEFAULT_HOTSPOT = 0.1;
+  // 使用 0 px 的图像覆盖原来的中心拖拽
+  mxConnectionHandler.prototype.connectImage = new mxImage('', 0, 0);
 }
 
 let layout = null;
@@ -398,8 +403,8 @@ export default {
       graph.setAllowLoops(false);
       graph.setDisconnectOnMove(false);
       graph.foldingEnabled = false;
-      // 智能调整靶点位置
       mxGraphHandler.prototype.guidesEnabled = true;
+      // 智能调整靶点位置
       mxEdgeHandler.prototype.snapToTerminals = true;
       graph.setHtmlLabels(true);
       // Configures the graph contains to resize and
@@ -407,11 +412,10 @@ export default {
       // graph.setResizeContainer(true);
       // graph.minimumContainerSize = new mxRectangle(0, 0, 500, 380);
       // graph.setBorder(60);
-      // 禁止从图形中心拉出线条
-      // graph.connectionHandler.isConnectableCell = () => false;
 
       // 鹰眼图
       new mxOutline(graph, document.getElementById('graphOutline'));
+      configConstraint(graph);
       configHoverIcon(graph);
       configConstituent(graph);
       this.configNodeStyle(graph);
