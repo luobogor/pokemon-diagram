@@ -10,8 +10,9 @@ const {
 } = mxgraph;
 
 const getNodeId = _.property('data.id');
+
 class Graph extends mxGraph {
-  getAllEdges() {
+  serializeEdges() {
     this.getModel().cells
       .filter(cell => cell.edge)
       .map(cell => {
@@ -22,10 +23,14 @@ class Graph extends mxGraph {
       });
   }
 
-  getAllNodes() {
+  serializeVerticles() {
     this.getModel().cells
       .filter(cell => cell.vertex && !this.isPart(cell))
       .map(cell => cell.data);
+  }
+
+  isReachable(source, target) {
+
   }
 }
 

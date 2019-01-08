@@ -7,3 +7,4 @@
 
 ## 常用 API
 - graph.getCellStyle(cell) 获取样式字典
+- graph.isMultigraph 判断是否多个图(即是不存在游离节点) 

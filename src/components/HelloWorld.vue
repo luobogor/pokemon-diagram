@@ -385,6 +385,11 @@ class Node {
   }
 }
 
+mxConnectionHandler.prototype.validateConnection = function (source, target) {
+  // isReachable(source, target);
+  return null;
+};
+
 export default {
   name: 'HelloWorld',
 
@@ -573,6 +578,10 @@ export default {
     },
 
     test(container) {
+      mxConstants.VERTEX_SELECTION_COLOR = '#008aff';
+      mxConstants.VERTEX_SELECTION_STROKEWIDTH = 1;
+      mxConstants.VERTEX_SELECTION_DASHED = true;
+
       // 禁用鼠标右键
       mxEvent.disableContextMenu(container);
       graph = new mxGraph(container);
@@ -687,7 +696,6 @@ export default {
     // 禁止编辑线段文本 查看 userobject
     // pagebreaks.html resetview
     // mxClient 提供各种判断当前客户端环境的工具函数
-    // state.secondLabel.wrap = true; 文本换行包裹
     // state.secondLabel.wrap = true; 文本换行包裹
     this.test(document.getElementById('graphContainer'));
   }
