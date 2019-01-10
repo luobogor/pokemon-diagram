@@ -15,8 +15,14 @@
         </ElOption>
       </ElSelect>
       <ElButton @click="exportXML">View XML</ElButton>
+      <ElButton @click="viewModel">View Model</ElButton>
+      <ElButton @click="removeSelectionCell">Remove Selection Cell</ElButton>
       <ElButton @click="exportJSON">View JSON</ElButton>
       <ElButton @click="autoLayout">Auto Layout</ElButton>
+      <ElButton
+        @click="removeSelectedCell">
+        Remove Selected Cell
+      </ElButton>
     </ElMain>
     <ElAside width="400px" style="padding-right: 20px;">
       <div id="graphOutline" class="graphOutline"></div>
@@ -38,7 +44,6 @@
 
 <script>
 import mx from 'mxgraph';
-import _ from 'lodash';
 
 const mxgraph = mx({
   mxBasePath: '/static/mxgraph'
@@ -223,7 +228,7 @@ class mxIconSet {
 function configHoverIcon() {
   // mxConstants.DEFAULT_HOTSPOT = 0.1;
   // 使用 0 px 的图像覆盖原来的中心拖拽
-  // mxConnectionHandler.prototype.connectImage = new mxImage('', 0, 0);
+  mxConnectionHandler.prototype.connectImage = new mxImage('', 0, 0);
   mxEdgeHandler.prototype.snapToTerminals = true;
 
   // 悬浮热区大小
@@ -429,6 +434,9 @@ export default {
   },
 
   methods: {
+    removeSelectedCell() {
+      graph.removeCell(graph.getSelectionCell());
+    },
     autoLayout() {
       const parent = graph.getDefaultParent();
       graph.getModel().beginUpdate();
@@ -566,11 +574,18 @@ export default {
       const elements = document.getElementsByClassName('element-img');
       Array.from(elements).forEach(addDrag);
     },
+    removeSelectionCell() {
+      graph.removeCells(graph.getSelectionCells());
+    },
+    viewModel() {
+      console.log(graph.getModel());
+      const cell = graph.getModel().cells[0];
+      console.log(cell);
+      debugger;
+    },
     exportXML() {
       const encoder = new mxCodec();
       const node = encoder.encode(graph.getModel());
-      const model = graph.getModel();
-      debugger;
       mxUtils.popup(mxUtils.getPrettyXml(node), true);
     },
     exportJSON() {
@@ -578,9 +593,9 @@ export default {
     },
 
     test(container) {
-      mxConstants.VERTEX_SELECTION_COLOR = '#008aff';
-      mxConstants.VERTEX_SELECTION_STROKEWIDTH = 1;
-      mxConstants.VERTEX_SELECTION_DASHED = true;
+      // mxConstants.VERTEX_SELECTION_COLOR = '#008aff';
+      // mxConstants.VERTEX_SELECTION_STROKEWIDTH = 1;
+      // mxConstants.VERTEX_SELECTION_DASHED = true;
 
       // 禁用鼠标右键
       mxEvent.disableContextMenu(container);
@@ -612,7 +627,7 @@ export default {
       mxOutline.prototype.updateOnPan = true;
       // configPorts();
       configAutoLayout();
-      configAnchors();
+      // configAnchors();
       configHoverIcon();
       configConstituent();
       this.configNodeStyle();
@@ -662,7 +677,8 @@ export default {
 
       // 删除edge,node事件
       graph.addListener(mxEvent.CELLS_REMOVED, function (sender, evt) {
-        console.log(evt.name);
+        console.log(evt);
+        debugger;
       });
 
       // graph.addListener(mxEvent.CELL_CONNECTED, function (sender, evt) {});
