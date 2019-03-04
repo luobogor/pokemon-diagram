@@ -122,6 +122,7 @@ const initGraph = () => {
   outline = new mxOutline(graph, document.getElementById('graphOutline'));
   makeDraggable(document.getElementsByClassName('element-img'));
 };
+
 export default {
   name: 'AppCanvas',
 
@@ -149,6 +150,10 @@ export default {
 
   mounted() {
     initGraph();
+  },
+
+  beforeDestroy() {
+    destroyGraph();
   }
 }
 </script>

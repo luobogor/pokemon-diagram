@@ -6,6 +6,9 @@ const {
   mxConstants,
   mxCellState,
   mxPerimeter,
+  mxCellEditor,
+  mxGraphHandler,
+  mxEvent,
 } = mxgraph;
 
 class Graph extends mxGraph {
@@ -23,11 +26,40 @@ class Graph extends mxGraph {
     this.setHtmlLabels(true);
     this._setDefaultVertexStyle();
     this._setDefaultEdgeStyle();
+    this._setDefaultConfig();
+  }
+
+  _setDefaultConfig() {
+    mxEvent.disableContextMenu(this.container);
+    // 编辑时回车不换行，变成完成输入
+    this.setEnterStopsCellEditing(true);
+    // 按 escape 后完成输入
+    mxCellEditor.prototype.escapeCancelsEditing = false;
+    // 失焦时完成输入
+    mxCellEditor.prototype.blurEnabled = true;
+
+    this.foldingEnabled = false;
+    this.setConnectable(true);
+    // Optional disabling of sizing
+    this.setCellsResizable(false);
+    this.setAllowLoops(false);
+
+    this.foldingEnabled = false;
+    // 对齐线
+    mxGraphHandler.prototype.guidesEnabled = true;
+    this.setHtmlLabels(true);
+
+    // 禁止游离线条
+    this.setDisconnectOnMove(false);
+    this.setAllowDanglingEdges(false);
+    mxGraph.prototype.isCellMovable = cell => !cell.edge;
+    // 禁止调整线条弯曲度
+    this.setCellsBendable(false);
+    // 禁止从将label从线条上拖离
+    mxGraph.prototype.edgeLabelsMovable = false;
   }
 
   _setDefaultVertexStyle() {
-    this.foldingEnabled = false;
-
     const normalTypeStyle = {
       [mxConstants.STYLE_SHAPE]: mxConstants.SHAPE_IMAGE,
       [mxConstants.STYLE_PERIMETER]: mxPerimeter.RectanglePerimeter,
@@ -73,9 +105,6 @@ class Graph extends mxGraph {
   }
 
   _setDefaultEdgeStyle() {
-    // mxGraph.prototype.edgeLabelsMovable = false;
-    // mxGraph.prototype.isCellMovable = cell => !cell.edge;
-
     const style = this.getStylesheet().getDefaultEdgeStyle();
     Object.assign(style, {
       [mxConstants.STYLE_ROUNDED]: true,
