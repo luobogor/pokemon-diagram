@@ -9,6 +9,11 @@ const {
   mxCellEditor,
   mxGraphHandler,
   mxEvent,
+  mxEdgeHandler,
+  mxShape,
+  mxConnectionConstraint,
+  mxPoint,
+  mxPolyline,
 } = mxgraph;
 
 class Graph extends mxGraph {
@@ -23,14 +28,20 @@ class Graph extends mxGraph {
 
   _setDefaultStyle() {
     // TODO
-    this.setHtmlLabels(true);
     this._setDefaultVertexStyle();
     this._setDefaultEdgeStyle();
     this._setDefaultConfig();
+    this._setAnchors();
   }
 
   _setDefaultConfig() {
+    this.setConnectable(true);
     mxEvent.disableContextMenu(this.container);
+
+    // 固定节点大小
+    this.setCellsResizable(false);
+    this.setAllowLoops(false);
+
     // 编辑时回车不换行，变成完成输入
     this.setEnterStopsCellEditing(true);
     // 按 escape 后完成输入
@@ -38,23 +49,22 @@ class Graph extends mxGraph {
     // 失焦时完成输入
     mxCellEditor.prototype.blurEnabled = true;
 
+    // 禁止节点折叠
     this.foldingEnabled = false;
-    this.setConnectable(true);
-    // Optional disabling of sizing
-    this.setCellsResizable(false);
-    this.setAllowLoops(false);
-
-    this.foldingEnabled = false;
-    // 对齐线
-    mxGraphHandler.prototype.guidesEnabled = true;
+    // 文本包裹效果必须开启此配置
     this.setHtmlLabels(true);
+
+    // 拖拽过程对齐线
+    mxGraphHandler.prototype.guidesEnabled = true;
 
     // 禁止游离线条
     this.setDisconnectOnMove(false);
     this.setAllowDanglingEdges(false);
     mxGraph.prototype.isCellMovable = cell => !cell.edge;
+
     // 禁止调整线条弯曲度
     this.setCellsBendable(false);
+
     // 禁止从将label从线条上拖离
     mxGraph.prototype.edgeLabelsMovable = false;
   }
@@ -120,6 +130,49 @@ class Graph extends mxGraph {
       const edge = this.createEdge();
       return new mxCellState(this.view, edge, this.getCellStyle(edge));
     };
+  }
+
+  _setAnchors() {
+    // 禁止从节点中心拖拽出线条
+    this.connectionHandler.isConnectableCell = () => false;
+    mxEdgeHandler.prototype.isConnectableCell = () => false;
+
+    // Overridden to define per-shape connection points
+    mxGraph.prototype.getAllConnectionConstraints = (terminal) => {
+      if (terminal != null && terminal.shape != null) {
+        if (terminal.shape.stencil != null) {
+          if (terminal.shape.stencil != null) {
+            return terminal.shape.stencil.constraints;
+          }
+        } else if (terminal.shape.constraints != null) {
+          return terminal.shape.constraints;
+        }
+      }
+
+      return null;
+    };
+
+    // Defines the default constraints for all shapes
+    mxShape.prototype.constraints = [
+      new mxConnectionConstraint(new mxPoint(0, 0), true),
+      new mxConnectionConstraint(new mxPoint(0, 1), true),
+      new mxConnectionConstraint(new mxPoint(1, 0), true),
+      new mxConnectionConstraint(new mxPoint(1, 1), true),
+      new mxConnectionConstraint(new mxPoint(0.25, 0), true),
+      new mxConnectionConstraint(new mxPoint(0.5, 0), true),
+      new mxConnectionConstraint(new mxPoint(0.75, 0), true),
+      new mxConnectionConstraint(new mxPoint(0, 0.25), true),
+      new mxConnectionConstraint(new mxPoint(0, 0.5), true),
+      new mxConnectionConstraint(new mxPoint(0, 0.75), true),
+      new mxConnectionConstraint(new mxPoint(1, 0.25), true),
+      new mxConnectionConstraint(new mxPoint(1, 0.5), true),
+      new mxConnectionConstraint(new mxPoint(1, 0.75), true),
+      new mxConnectionConstraint(new mxPoint(0.25, 1), true),
+      new mxConnectionConstraint(new mxPoint(0.5, 1), true),
+      new mxConnectionConstraint(new mxPoint(0.75, 1), true)];
+
+    // Edges have no connection points
+    mxPolyline.prototype.constraints = null;
   }
 }
 
