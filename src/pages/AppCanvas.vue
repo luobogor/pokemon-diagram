@@ -31,12 +31,13 @@
           top:normalTypePosition.top,
           left:normalTypePosition.left
           }"
-          v-model="normalTypeValue">
+          v-model="normalType"
+          @input="changeNormalType">
           <ElOption
             v-for="item in normalTypeOptions"
             :key="item.label"
             :label="item.label"
-            :value="item.label">
+            :value="item.icon">
             <div
               class="normal-type-item">
               <img
@@ -78,6 +79,7 @@
 <script>
 import mxgraph from '../graph/index';
 import { genGraph, destroyGraph } from '../graph/Graph';
+import { elements, normalTypeOptions } from '../common/data';
 
 const {
   mxOutline,
@@ -94,7 +96,6 @@ Object.assign(mxEvent, {
 
 let graph = null;
 let outline = null;
-
 
 const makeDraggable = (sourceEles) => {
   const dropValidate = function (evt) {
@@ -114,9 +115,15 @@ const makeDraggable = (sourceEles) => {
   const dropSuccessCb = function (_graph, evt, target, x, y) {
     const source = this.element;
     const src = source.getAttribute('src');
+    const id = Number(source.getAttribute('id'));
 
     const nodeRootVertex = new mxCell('Name', new mxGeometry(0, 0, 100, 135), `node;image=${src}`);
     nodeRootVertex.vertex = true;
+    // 初始化业务数据
+    nodeRootVertex.data = {
+      element: elements.find((element) => element.id === id),
+      normalType: '',
+    };
 
     const title = source.getAttribute('alt');
     const titleVertex = graph.insertVertex(nodeRootVertex, null, title,
@@ -156,7 +163,7 @@ const listenGraphEvent = () => {
 
     const clickNormalType = cell.style.includes('normalType');
     if (clickNormalType) {
-      // 触发自定义事件
+      // 使用 mxGraph 事件中心，触发自定义事件
       graph.fireEvent(new mxEventObject(mxEvent.NORMAL_TYPE_CLICKED, 'cell', cell));
     }
   });
@@ -180,41 +187,24 @@ export default {
         top: '0',
         left: '0',
       },
-      elements: [{
-        id: 1,
-        icon: 'ele-001.jpeg',
-        title: '比卡丘',
-      }, {
-        id: 2,
-        icon: 'ele-002.png',
-        title: '小火龙',
-      }, {
-        id: 3,
-        icon: 'ele-003.jpeg',
-        title: '杰尼龟',
-      }, {
-        id: 4,
-        icon: 'ele-004.jpg',
-        title: '妙蛙种子',
-      }],
-      normalTypeValue: '',
-      normalTypeOptions: [{
-        label: '电',
-        icon: 'thunder.png',
-      }, {
-        label: '火',
-        icon: 'fire.png',
-      }, {
-        label: '草',
-        icon: 'forest.png',
-      }, {
-        label: '水',
-        icon: 'water.png',
-      }],
+      normalType: '',
+      normalTypeOptions,
+      elements,
+      selectEdge: {},
+      selectVertex: {},
     };
   },
 
   methods: {
+    //************
+    // NormalType
+    //************
+    changeNormalType(val) {
+      this.selectVertex.data.normalType = val;
+      const normalTypeVertex = this.selectVertex.children[1];
+      graph.setStyle(normalTypeVertex, 'image', `/static/images/normal-type/${val}`);
+      this.hideTypeSelect();
+    },
     hideTypeSelect() {
       this.normalTypeSelectVisible = false;
     },
@@ -225,14 +215,32 @@ export default {
       this.normalTypePosition.top = `${top - 8}px`;
       this.normalTypeSelectVisible = true;
     },
-    listenCustomGraphEvent() {
+
+    _listenEvent() {
+      graph.getSelectionModel().addListener(mxEvent.CHANGE, (selectModel) => {
+        this.selectVertex = {};
+        this.selectEdge = {};
+
+        if (!selectModel.cells.length) {
+          return;
+        }
+
+        const cell = selectModel.cells[0];
+        if (cell.vertex) {
+          this.selectVertex = cell;
+        } else {
+          this.selectEdge = cell;
+        }
+      });
+
       graph.addListener(mxEvent.NORMAL_TYPE_CLICKED, this.showNormalTypeSelect);
+      graph.addListener(mxEvent.VERTEX_START_MOVE, this.hideTypeSelect);
     }
   },
 
   mounted() {
     initGraph();
-    this.listenCustomGraphEvent();
+    this._listenEvent();
   },
 
   beforeDestroy() {

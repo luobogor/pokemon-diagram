@@ -1,4 +1,5 @@
 import mxgraph from './index';
+import _ from 'lodash';
 
 const {
   mxGraph,
@@ -13,17 +14,70 @@ const {
   mxShape,
   mxConnectionConstraint,
   mxPoint,
+  mxEventObject,
   mxPolyline,
 } = mxgraph;
 
+Object.assign(mxEvent, {
+  EDGE_START_MOVE: 'edgeStartMove',
+  VERTEX_START_MOVE: 'vertexStartMove',
+});
+
 class Graph extends mxGraph {
+  static getStyleDict(cell) {
+    return _.compact(cell.getStyle().split(';'))
+      .reduce((acc, item) => {
+        const [key, value] = item.split('=');
+        acc[key] = value;
+        return acc;
+      }, {});
+  }
+
+  static convertStyleToString(styleDict) {
+    let style = Object.entries(styleDict)
+      .map(([key, value]) => `${key}=${value}`)
+      .join(';');
+    style = style.replace(/=undefined/g, '');
+    return `${style};`;
+  }
+
   constructor(container) {
     super(container);
     this._init();
   }
 
   _init() {
+    this._configConstituent();
     this._setDefaultStyle();
+    this._configCustomEvent();
+  }
+
+  _configConstituent() {
+    // Redirects selection to parent
+    this.selectCellForEvent = (...args) => {
+      const [cell] = args;
+      if (this.isPart(cell)) {
+        args[0] = this.model.getParent(cell);
+        mxGraph.prototype.selectCellForEvent.call(this, args);
+        return;
+      }
+
+      mxGraph.prototype.selectCellForEvent.apply(this, args);
+    };
+
+    /**
+     * Redirects start drag to parent.
+     */
+    const graphHandlerGetInitialCellForEvent = mxGraphHandler.prototype.getInitialCellForEvent;
+    mxGraphHandler.prototype.getInitialCellForEvent = function getInitialCellForEvent(...args) {
+      // this 是 mxGraphHandler
+      let cell = graphHandlerGetInitialCellForEvent.apply(this, args);
+      if (this.graph.isPart(cell)) {
+        cell = this.graph.getModel().getParent(cell);
+      }
+
+      return cell;
+    };
   }
 
   _setDefaultStyle() {
@@ -96,7 +150,7 @@ class Graph extends mxGraph {
 
       [mxConstants.STYLE_IMAGE_WIDTH]: '72',
       [mxConstants.STYLE_IMAGE_HEIGHT]: '72',
-      [mxConstants.STYLE_SPACING_TOP]: '105',
+      [mxConstants.STYLE_SPACING_TOP]: '100',
       [mxConstants.STYLE_SPACING]: '8',
     };
     this.getStylesheet().putCellStyle('node', nodeStyle);
@@ -175,9 +229,41 @@ class Graph extends mxGraph {
     mxPolyline.prototype.constraints = null;
   }
 
+  _configCustomEvent() {
+    const graph = this;
+    const drawPreview = mxEdgeHandler.prototype.start;
+    mxEdgeHandler.prototype.start = function start(...args) {
+      drawPreview.apply(this, args);
+      graph.fireEvent(new mxEventObject(mxEvent.EDGE_START_MOVE,
+        'edge', this.state.cell,
+        'source', this.isSource,
+      ));
+    };
+
+
+    const oldCreatePreviewShape = mxGraphHandler.prototype.createPreviewShape;
+    mxGraphHandler.prototype.createPreviewShape = function createPreviewShape(...args) {
+      graph.fireEvent(new mxEventObject(mxEvent.VERTEX_START_MOVE));
+      return oldCreatePreviewShape.apply(this, args);
+    };
+  }
+
   getDom(cell) {
-    const state = graph.view.getState(cell);
+    const state = this.view.getState(cell);
     return state.shape.node;
+  }
+
+  setStyle(cell, key, value) {
+    const styleDict = Graph.getStyleDict(cell);
+    styleDict[key] = value;
+    const style = Graph.convertStyleToString(styleDict);
+    this.getModel().setStyle(cell, style);
+  }
+
+  isPart(cell) {
+    const state = this.view.getState(cell);
+    const style = (state != null) ? state.style : this.getCellStyle(cell);
+    return style.constituent === 1;
   }
 }
 

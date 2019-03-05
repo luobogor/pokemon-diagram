@@ -12,6 +12,7 @@
 - 左上边界搞不定
 
 ## 常用 API
+_configCustomEvent
 
 ```js
     handleNormalTypeClick(sender, evt) {
@@ -20,3 +21,11 @@
       const dom = state.shape.node;
     },
 ```
+
+_configConstituent
+
+setStyle
+
+按功能点讲解
+
+
