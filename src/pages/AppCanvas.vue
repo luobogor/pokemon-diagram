@@ -72,6 +72,15 @@
           </li>
         </ul>
       </div>
+      <EdgePanel
+        :width="selectEdgeStyle.strokeWidth"
+        :edge-style="selectEdgeStyle.dashed"
+        :color="selectEdgeStyle.strokeColor"
+        :handle-width-change="changeEdgeWidth"
+        :handle-style-change="ChangeEdgeStyle"
+        :handle-color-change="ChangeEdgeColor"
+        v-if="!_.isEmpty(this.selectEdge)"
+      />
     </ElAside>
   </ElContainer>
 </template>
@@ -79,6 +88,7 @@
 <script>
 import mxgraph from '../graph/index';
 import { genGraph, destroyGraph } from '../graph/Graph';
+import EdgePanel from './components/EdgePanel';
 import { elements, normalTypeOptions } from '../common/data';
 
 const {
@@ -191,11 +201,22 @@ export default {
       normalTypeOptions,
       elements,
       selectEdge: {},
+      selectEdgeStyle: {},
       selectVertex: {},
     };
   },
 
+  components: {
+    EdgePanel,
+  },
+
   methods: {
+    //************
+    // EdgeStyle
+    //************
+    changeEdgeWidth() {},
+    ChangeEdgeStyle() {},
+    ChangeEdgeColor() {},
     //************
     // NormalType
     //************
@@ -220,6 +241,7 @@ export default {
       graph.getSelectionModel().addListener(mxEvent.CHANGE, (selectModel) => {
         this.selectVertex = {};
         this.selectEdge = {};
+        this.selectEdgeStyle = {};
 
         if (!selectModel.cells.length) {
           return;
@@ -230,6 +252,7 @@ export default {
           this.selectVertex = cell;
         } else {
           this.selectEdge = cell;
+          this.selectEdgeStyle = graph.getCellStyle(cell);
         }
       });
 
