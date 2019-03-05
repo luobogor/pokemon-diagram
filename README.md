@@ -12,3 +12,11 @@
 - 左上边界搞不定
 
 ## 常用 API
+
+```js
+    handleNormalTypeClick(sender, evt) {
+      const NormalTypeVertex = evt.getProperty('cell');
+      const state = graph.view.getState(NormalTypeVertex);
+      const dom = state.shape.node;
+    },
+```

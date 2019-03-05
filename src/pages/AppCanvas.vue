@@ -23,7 +23,31 @@
           删除
         </ElButton>
       </div>
-      <div id="graphContainer"/>
+      <div id="graphContainer">
+        <ElSelect
+          v-if="normalTypeSelectVisible"
+          class="normal-type-select"
+          :style="{
+          top:normalTypePosition.top,
+          left:normalTypePosition.left
+          }"
+          v-model="normalTypeValue">
+          <ElOption
+            v-for="item in normalTypeOptions"
+            :key="item.label"
+            :label="item.label"
+            :value="item.label">
+            <div
+              class="normal-type-item">
+              <img
+                :src="`/static/images/normal-type/${item.icon}`"
+                :alt="item.icon">
+              <span
+                class="ml8">{{ item.label }}</span>
+            </div>
+          </ElOption>
+        </ElSelect>
+      </div>
     </ElMain>
     <ElAside
       class="app-canvas__right"
@@ -61,10 +85,16 @@ const {
   mxCell,
   mxGeometry,
   mxUtils,
+  mxEventObject,
 } = mxgraph;
+
+Object.assign(mxEvent, {
+  NORMAL_TYPE_CLICKED: 'NORMAL_TYPE_CLICKED',
+});
 
 let graph = null;
 let outline = null;
+
 
 const makeDraggable = (sourceEles) => {
   const dropValidate = function (evt) {
@@ -97,7 +127,7 @@ const makeDraggable = (sourceEles) => {
 
     const normalTypeVertex = graph.insertVertex(nodeRootVertex, null, null,
       0.05, 0.05, 19, 14,
-      `normalType;constituent=1;fillColor=none;image=/static/images/normal-type/fire.png`,
+      `normalType;constituent=1;fillColor=none;image=/static/images/normal-type/forest.png`,
       true);
     normalTypeVertex.setConnectable(false);
 
@@ -117,17 +147,39 @@ const makeDraggable = (sourceEles) => {
   });
 };
 
+const listenGraphEvent = () => {
+  graph.addListener(mxEvent.CLICK, (sender, evt) => {
+    const cell = evt.properties.cell;
+    if (!cell) {
+      return;
+    }
+
+    const clickNormalType = cell.style.includes('normalType');
+    if (clickNormalType) {
+      // 触发自定义事件
+      graph.fireEvent(new mxEventObject(mxEvent.NORMAL_TYPE_CLICKED, 'cell', cell));
+    }
+  });
+};
+
 const initGraph = () => {
   graph = genGraph(document.getElementById('graphContainer'));
   outline = new mxOutline(graph, document.getElementById('graphOutline'));
   makeDraggable(document.getElementsByClassName('element-img'));
+  listenGraphEvent();
 };
+
 
 export default {
   name: 'AppCanvas',
 
   data() {
     return {
+      normalTypeSelectVisible: false,
+      normalTypePosition: {
+        top: '0',
+        left: '0',
+      },
       elements: [{
         id: 1,
         icon: 'ele-001.jpeg',
@@ -144,12 +196,43 @@ export default {
         id: 4,
         icon: 'ele-004.jpg',
         title: '妙蛙种子',
-      }]
+      }],
+      normalTypeValue: '',
+      normalTypeOptions: [{
+        label: '电',
+        icon: 'thunder.png',
+      }, {
+        label: '火',
+        icon: 'fire.png',
+      }, {
+        label: '草',
+        icon: 'forest.png',
+      }, {
+        label: '水',
+        icon: 'water.png',
+      }],
     };
+  },
+
+  methods: {
+    hideTypeSelect() {
+      this.normalTypeSelectVisible = false;
+    },
+    showNormalTypeSelect(sender, evt) {
+      const normalTypeDom = graph.getDom(evt.getProperty('cell'));
+      const { left, top } = normalTypeDom.getBoundingClientRect();
+      this.normalTypePosition.left = `${left - 210}px`;
+      this.normalTypePosition.top = `${top - 8}px`;
+      this.normalTypeSelectVisible = true;
+    },
+    listenCustomGraphEvent() {
+      graph.addListener(mxEvent.NORMAL_TYPE_CLICKED, this.showNormalTypeSelect);
+    }
   },
 
   mounted() {
     initGraph();
+    this.listenCustomGraphEvent();
   },
 
   beforeDestroy() {
@@ -160,20 +243,23 @@ export default {
 
 <style lang="less" scoped>
 .app-canvas {
+  #graphContainer {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 90vh;
+    background: url('../assets/images/grid.gif');
+    cursor: default;
+  }
   &__main {
-    #graphContainer {
-      position: relative;
-      overflow: hidden;
-      width: 100%;
-      height: 90vh;
-      background: url('../assets/images/grid.gif');
-      cursor: default;
-    }
     .tool-bar {
       background: #eee;
       padding-left: 10px;
       border-radius: 4px;
       margin-bottom: 10px;
+    }
+    .normal-type-select {
+      position: fixed;
     }
   }
   &__right {
@@ -202,6 +288,18 @@ export default {
         }
       }
     }
+  }
+}
+</style>
+
+<style lang="less">
+.normal-type-item {
+  display: flex;
+  align-items: center;
+  & > img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
   }
 }
 </style>

@@ -174,6 +174,11 @@ class Graph extends mxGraph {
     // Edges have no connection points
     mxPolyline.prototype.constraints = null;
   }
+
+  getDom(cell) {
+    const state = graph.view.getState(cell);
+    return state.shape.node;
+  }
 }
 
 let graph = {};
