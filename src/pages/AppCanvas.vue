@@ -77,9 +77,7 @@
         :width="selectEdgeStyle.strokeWidth"
         :dashed="selectEdgeStyle.dashed"
         :color="selectEdgeStyle.strokeColor"
-        :handle-width-change="changeEdgeWidth"
-        :handle-style-change="ChangeEdgeStyle"
-        :handle-color-change="ChangeEdgeColor"/>
+        :handle-style-change="ChangeEdgeStyle"/>
     </ElAside>
   </ElContainer>
 </template>
@@ -221,14 +219,8 @@ export default {
     //************
     // EdgeStyle
     //************
-    changeEdgeWidth(val) {
-      graph.setStyle(this.selectEdge, 'strokeWidth', val);
-    },
-    ChangeEdgeStyle(dashed) {
-      graph.setStyle(this.selectEdge, 'dashed', dashed);
-    },
-    ChangeEdgeColor(val) {
-      graph.setStyle(this.selectEdge, 'strokeColor', val);
+    ChangeEdgeStyle(key, value) {
+      graph.setStyle(this.selectEdge, key, value);
     },
     //************
     // NormalType

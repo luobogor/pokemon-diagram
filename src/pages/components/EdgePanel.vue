@@ -9,7 +9,7 @@
           class="edge-width"
           min="1"
           type="number"
-          @input="handleWidthChange($event.target.value)"/>
+          @input="handleStyleChange('strokeWidth',$event.target.value)"/>
         <ElPopover
           popper-class="line-popper"
           placement="bottom"
@@ -23,11 +23,11 @@
           <ul
             class="line-box">
             <li
-              @click="changeStyle(0)">
+              @click="handleStyleChange('dashed',0)">
               <div class="solid-line"></div>
             </li>
             <li
-              @click="changeStyle(1)">
+              @click="handleStyleChange('dashed',1)">
               <div class="dashed-line"></div>
             </li>
           </ul>
@@ -36,7 +36,7 @@
           :value="color"
           class="edge-color"
           type="color"
-          @input="handleColorChange($event.target.value)"/>
+          @input="handleStyleChange('strokeColor',$event.target.value)"/>
       </section>
     </Panel>
   </div>
@@ -50,7 +50,7 @@ export default {
 
   props: {
     width: {
-      type: Number,
+      type: [String, Number],
       required: true,
     },
     dashed: {
@@ -61,15 +61,7 @@ export default {
       type: String,
       required: true,
     },
-    handleWidthChange: {
-      type: Function,
-      required: true,
-    },
     handleStyleChange: {
-      type: Function,
-      required: true,
-    },
-    handleColorChange: {
       type: Function,
       required: true,
     },
@@ -83,12 +75,6 @@ export default {
 
   components: {
     Panel,
-  },
-
-  methods: {
-    changeStyle(dashed) {
-      this.handleStyleChange(dashed);
-    }
   },
 }
 </script>
