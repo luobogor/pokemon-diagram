@@ -265,6 +265,14 @@ class Graph extends mxGraph {
     const style = (state != null) ? state.style : this.getCellStyle(cell);
     return style.constituent === 1;
   }
+  deleteSubtree(cell) {
+    const cells = [];
+    this.traverse(cell, true, (vertex) => {
+      cells.push(vertex);
+      return true;
+    });
+    this.removeCells(cells);
+  }
 }
 
 let graph = {};

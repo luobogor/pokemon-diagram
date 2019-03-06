@@ -19,7 +19,8 @@
         <ElButton
           type="text"
           size="mini"
-          disabled>
+          @click="del"
+          :disabled="_.isEmpty(selectVertex) && _.isEmpty(selectEdge)">
           删除
         </ElButton>
       </div>
@@ -216,9 +217,14 @@ export default {
   },
 
   methods: {
-    //************
-    // EdgeStyle
-    //************
+    del() {
+      if (!_.isEmpty(this.selectVertex)) {
+        graph.deleteSubtree(this.selectVertex);
+      } else {
+        graph.removeCells([this.selectEdge]);
+      }
+    },
+    //
     ChangeEdgeStyle(key, value) {
       graph.setStyle(this.selectEdge, key, value);
     },
