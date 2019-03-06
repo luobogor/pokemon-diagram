@@ -60,25 +60,26 @@
     <ElAside
       class="app-canvas__right"
       width="234px">
-      <div
-        class="element-panel">
-        <div
-          id="graphOutline"/>
-        <ul
-          class="elements">
-          <li
-            class="element"
-            v-for="(element,idx) in elements"
-            :key="idx">
-            <img
-              v-bind="element"
-              class="element-img"
-              :src="`/static/images/ele/${element.icon}`"
-              :alt="element.title">
-            <p>{{ element.title }}</p>
-          </li>
-        </ul>
-      </div>
+      <Panel
+        class="element-panel"
+        title="元素">
+        <section>
+          <ul
+            class="elements">
+            <li
+              class="element"
+              v-for="(element,idx) in elements"
+              :key="idx">
+              <img
+                v-bind="element"
+                class="element-img"
+                :src="`/static/images/ele/${element.icon}`"
+                :alt="element.title">
+              <p>{{ element.title }}</p>
+            </li>
+          </ul>
+        </section>
+      </Panel>
       <EdgePanel
         v-if="!_.isEmpty(this.selectEdgeStyle)"
         :width="selectEdgeStyle.strokeWidth"
@@ -86,12 +87,19 @@
         :color="selectEdgeStyle.strokeColor"
         :handle-style-change="ChangeEdgeStyle"/>
     </ElAside>
+    <div
+      class="outline-wrapper">
+      <h4>导航器</h4>
+      <div
+        id="graphOutline"/>
+    </div>
   </ElContainer>
 </template>
 
 <script>
-import mxgraph from '../graph/index';
 import FileSaver from 'file-saver';
+import Panel from 'components/Panel';
+import mxgraph from '../graph/index';
 import { genGraph, destroyGraph } from '../graph/Graph';
 import EdgePanel from './components/EdgePanel';
 import { elements, normalTypeOptions } from '../common/data';
@@ -211,6 +219,7 @@ export default {
   },
 
   components: {
+    Panel,
     EdgePanel,
   },
 
@@ -224,6 +233,9 @@ export default {
   },
 
   methods: {
+    //*******
+    // File
+    //*******
     exportFile() {
       const xml = graph.exportModelXML();
       const blob = new Blob([xml], { type: "text/plain;charset=utf-8" });
@@ -241,6 +253,7 @@ export default {
     importFile() {
       this.$refs.importInput.click();
     },
+    //
     del() {
       if (!_.isEmpty(this.selectVertex)) {
         graph.deleteSubtree(this.selectVertex);
@@ -314,9 +327,10 @@ export default {
     overflow: hidden;
     width: 100%;
     height: 90vh;
-    background: url('../assets/images/grid.gif');
-    cursor: default;
+    background: #eee url('../assets/images/grid.gif') 0 0 repeat;
+    border-radius: 4px;
   }
+
   &__main {
     .tool-bar {
       background: #eee;
@@ -329,10 +343,10 @@ export default {
     }
   }
   &__right {
+    position: relative;
     padding: 20px 20px 0 0;
-    #graphOutline {
-      border-radius: 4px;
-      border: 1px solid #e6e6e6;
+    .element-panel {
+      margin-top: -9px;
     }
     .elements {
       margin-top: 20px;
@@ -353,6 +367,24 @@ export default {
           margin-top: 8px;
         }
       }
+    }
+  }
+
+  .outline-wrapper {
+    border: 1px solid #dedede;
+    background: #fff;
+    position: fixed;
+    right: 262px;
+    top: 66px;
+    border-radius: 4px;
+    z-index: 10;
+    > h4 {
+      padding: 6px;
+      font-size: 12px;
+      border-bottom: 1px solid #e6e6e6;
+    }
+    #graphOutline {
+      width: 200px;
     }
   }
 }

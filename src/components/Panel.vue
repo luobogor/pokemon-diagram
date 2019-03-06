@@ -24,10 +24,11 @@ export default {
     padding: 0;
     margin: 0;
     > h4 {
-      padding: 16px;
+      padding: 12px 0;
       text-align: left;
       color: #333;
       font-size: 16px;
+      border-bottom: 1px solid #e6e6e6;
     }
   }
 </style>

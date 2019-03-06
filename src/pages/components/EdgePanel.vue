@@ -81,11 +81,12 @@ export default {
 
 <style lang="less" scoped>
 .content {
+  margin-top: 20px;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   .edge-width {
     padding-left: 2px;
-    width: 40px;
+    width: 44px;
     border-radius: 4px;
   }
   .edge-color {
@@ -94,11 +95,11 @@ export default {
   .style-select-box {
     display: flex;
     align-items: center;
-    border: 1px solid #898989;
+    border: 1px solid #b9b9b9;
     border-radius: 4px;
     box-sizing: border-box;
     padding: 8px;
-    width: 46px;
+    width: 50px;
     height: 24px;
     cursor: pointer;
   }
