@@ -5,15 +5,21 @@
       class="app-canvas__main">
       <div
         class="tool-bar">
-        <ElButton
-          type="text"
-          size="mini">
-          导入
-        </ElButton>
+        <input
+          @change="readFile"
+          ref="importInput"
+          class="hide"
+          type="file">
         <ElButton
           type="text"
           size="mini"
-          disabled>
+          @click="importFile">
+          导入
+        </ElButton>
+        <ElButton
+          @click="exportFile"
+          type="text"
+          size="mini">
           导出
         </ElButton>
         <ElButton
@@ -85,6 +91,7 @@
 
 <script>
 import mxgraph from '../graph/index';
+import FileSaver from 'file-saver';
 import { genGraph, destroyGraph } from '../graph/Graph';
 import EdgePanel from './components/EdgePanel';
 import { elements, normalTypeOptions } from '../common/data';
@@ -217,6 +224,23 @@ export default {
   },
 
   methods: {
+    exportFile() {
+      const xml = graph.exportModelXML();
+      const blob = new Blob([xml], { type: "text/plain;charset=utf-8" });
+      FileSaver.saveAs(blob, "pocket_monster.xml");
+    },
+    readFile(evt) {
+      const file = evt.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const txt = e.target.result;
+        graph.importModelXML(txt);
+      };
+      reader.readAsText(file);
+    },
+    importFile() {
+      this.$refs.importInput.click();
+    },
     del() {
       if (!_.isEmpty(this.selectVertex)) {
         graph.deleteSubtree(this.selectVertex);
@@ -282,6 +306,8 @@ export default {
 </script>
 
 <style lang="less" scoped>
+@import "../assets/style/module/util";
+
 .app-canvas {
   #graphContainer {
     position: relative;

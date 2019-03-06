@@ -16,6 +16,8 @@ const {
   mxPoint,
   mxEventObject,
   mxPolyline,
+  mxCodec,
+  mxUtils,
 } = mxgraph;
 
 Object.assign(mxEvent, {
@@ -265,6 +267,7 @@ class Graph extends mxGraph {
     const style = (state != null) ? state.style : this.getCellStyle(cell);
     return style.constituent === 1;
   }
+
   deleteSubtree(cell) {
     const cells = [];
     this.traverse(cell, true, (vertex) => {
@@ -272,6 +275,24 @@ class Graph extends mxGraph {
       return true;
     });
     this.removeCells(cells);
+  }
+
+  importModelXML(xmlTxt) {
+    this.getModel().beginUpdate();
+    try {
+      const doc = mxUtils.parseXml(xmlTxt);
+      const root = doc.documentElement;
+      const dec = new mxCodec(root.ownerDocument);
+      dec.decode(root, this.getModel());
+    } finally {
+      this.getModel().endUpdate();
+    }
+  }
+
+  exportModelXML() {
+    const enc = new mxCodec(mxUtils.createXmlDocument());
+    const node = enc.encode(this.getModel());
+    return mxUtils.getPrettyXml(node);
   }
 }
 
