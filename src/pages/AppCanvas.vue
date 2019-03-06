@@ -73,14 +73,13 @@
         </ul>
       </div>
       <EdgePanel
+        v-if="!_.isEmpty(this.selectEdgeStyle)"
         :width="selectEdgeStyle.strokeWidth"
-        :edge-style="selectEdgeStyle.dashed"
+        :dashed="selectEdgeStyle.dashed"
         :color="selectEdgeStyle.strokeColor"
         :handle-width-change="changeEdgeWidth"
         :handle-style-change="ChangeEdgeStyle"
-        :handle-color-change="ChangeEdgeColor"
-        v-if="!_.isEmpty(this.selectEdge)"
-      />
+        :handle-color-change="ChangeEdgeColor"/>
     </ElAside>
   </ElContainer>
 </template>
@@ -201,7 +200,6 @@ export default {
       normalTypeOptions,
       elements,
       selectEdge: {},
-      selectEdgeStyle: {},
       selectVertex: {},
     };
   },
@@ -210,13 +208,28 @@ export default {
     EdgePanel,
   },
 
+  computed: {
+    selectEdgeStyle() {
+      if (!_.isEmpty(this.selectEdge)) {
+        return graph.getCellStyle(this.selectEdge);
+      }
+      return {};
+    }
+  },
+
   methods: {
     //************
     // EdgeStyle
     //************
-    changeEdgeWidth() {},
-    ChangeEdgeStyle() {},
-    ChangeEdgeColor() {},
+    changeEdgeWidth(val) {
+      graph.setStyle(this.selectEdge, 'strokeWidth', val);
+    },
+    ChangeEdgeStyle(dashed) {
+      graph.setStyle(this.selectEdge, 'dashed', dashed);
+    },
+    ChangeEdgeColor(val) {
+      graph.setStyle(this.selectEdge, 'strokeColor', val);
+    },
     //************
     // NormalType
     //************
@@ -237,25 +250,23 @@ export default {
       this.normalTypeSelectVisible = true;
     },
 
+    handleSelectionChange(selectModel) {
+      this.selectVertex = {};
+      this.selectEdge = {};
+      if (!selectModel.cells.length) {
+        return;
+      }
+
+      const cell = selectModel.cells[0];
+      if (cell.vertex) {
+        this.selectVertex = cell;
+      } else {
+        this.selectEdge = cell;
+      }
+    },
     _listenEvent() {
-      graph.getSelectionModel().addListener(mxEvent.CHANGE, (selectModel) => {
-        this.selectVertex = {};
-        this.selectEdge = {};
-        this.selectEdgeStyle = {};
-
-        if (!selectModel.cells.length) {
-          return;
-        }
-
-        const cell = selectModel.cells[0];
-        if (cell.vertex) {
-          this.selectVertex = cell;
-        } else {
-          this.selectEdge = cell;
-          this.selectEdgeStyle = graph.getCellStyle(cell);
-        }
-      });
-
+      // TODO 为什么 change 事件如果使用箭头函数 this 竟然是 selectModel 而不是 vm
+      graph.getSelectionModel().addListener(mxEvent.CHANGE, this.handleSelectionChange);
       graph.addListener(mxEvent.NORMAL_TYPE_CLICKED, this.showNormalTypeSelect);
       graph.addListener(mxEvent.VERTEX_START_MOVE, this.hideTypeSelect);
     }

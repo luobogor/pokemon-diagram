@@ -9,21 +9,34 @@
           class="edge-width"
           min="1"
           type="number"
-          @input="handleWidthChange"/>
+          @input="handleWidthChange($event.target.value)"/>
         <ElPopover
+          popper-class="line-popper"
           placement="bottom"
-          width="200"
+          width="80"
           trigger="click">
-          <div slot="reference">
-            线条
+          <div
+            class="style-select-box"
+            slot="reference">
+            <div :class="selectStyleClass"></div>
           </div>
-          下面的线条
+          <ul
+            class="line-box">
+            <li
+              @click="changeStyle(0)">
+              <div class="solid-line"></div>
+            </li>
+            <li
+              @click="changeStyle(1)">
+              <div class="dashed-line"></div>
+            </li>
+          </ul>
         </ElPopover>
         <input
           :value="color"
           class="edge-color"
           type="color"
-          @input="handleColorChange"/>
+          @input="handleColorChange($event.target.value)"/>
       </section>
     </Panel>
   </div>
@@ -37,27 +50,45 @@ export default {
 
   props: {
     width: {
+      type: Number,
       required: true,
     },
-    edgeStyle: {
-      required: true,
+    dashed: {
+      type: Number,
+      default: 0,
     },
     color: {
+      type: String,
       required: true,
     },
     handleWidthChange: {
+      type: Function,
       required: true,
     },
     handleStyleChange: {
+      type: Function,
       required: true,
     },
     handleColorChange: {
+      type: Function,
       required: true,
+    },
+  },
+
+  computed: {
+    selectStyleClass() {
+      return this.dashed ? 'dashed-line' : 'solid-line';
     },
   },
 
   components: {
     Panel,
+  },
+
+  methods: {
+    changeStyle(dashed) {
+      this.handleStyleChange(dashed);
+    }
   },
 }
 </script>
@@ -74,5 +105,37 @@ export default {
   .edge-color {
     border-radius: 4px;
   }
+  .style-select-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #898989;
+    border-radius: 4px;
+    box-sizing: border-box;
+    padding: 8px;
+    width: 46px;
+    height: 24px;
+    cursor: pointer;
+  }
+}
+</style>
+<style lang="less">
+.line-popper {
+  min-width: 80px;
+  .line-box {
+    > li {
+      cursor: pointer;
+      padding: 9px 0;
+    }
+  }
+}
+
+.solid-line {
+  width: 100%;
+  border-bottom: 1px solid #000;
+}
+
+.dashed-line {
+  width: 100%;
+  border-bottom: 1px dashed #000;
 }
 </style>
