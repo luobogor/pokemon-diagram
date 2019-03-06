@@ -1,4 +1,8 @@
 export const elements = [{
+  id: 5,
+  icon: 'ele-005.png',
+  title: '智爷',
+}, {
   id: 1,
   icon: 'ele-001.jpeg',
   title: '比卡丘',

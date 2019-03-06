@@ -192,11 +192,18 @@ const listenGraphEvent = () => {
   });
 };
 
+const setCursor = () => {
+  graph.getCursorForCell = (cell) => {
+    return cell.style.includes('normalType') ? 'pointer' : 'default';
+  };
+};
+
 const initGraph = () => {
   graph = genGraph(document.getElementById('graphContainer'));
   outline = new mxOutline(graph, document.getElementById('graphOutline'));
   makeDraggable(document.getElementsByClassName('element-img'));
   listenGraphEvent();
+  setCursor();
 };
 
 
@@ -358,6 +365,7 @@ export default {
         text-align: center;
         margin-bottom: 10px;
         > img {
+          border-radius: 4px;
           cursor: pointer;
           width: 100%;
           height: 100px;
