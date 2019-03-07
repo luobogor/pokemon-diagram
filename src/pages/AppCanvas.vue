@@ -38,7 +38,7 @@
           top:normalTypePosition.top,
           left:normalTypePosition.left
           }"
-          v-model="normalType"
+          :value="selectVertex.data.normalType"
           @input="changeNormalType">
           <ElOption
             v-for="item in normalTypeOptions"
@@ -217,7 +217,6 @@ export default {
         top: '0',
         left: '0',
       },
-      normalType: '',
       normalTypeOptions,
       elements,
       selectEdge: {},

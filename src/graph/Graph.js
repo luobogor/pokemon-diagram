@@ -15,7 +15,6 @@ const {
   mxConnectionConstraint,
   mxPoint,
   mxEventObject,
-  mxPolyline,
   mxCodec,
   mxUtils,
 } = mxgraph;
@@ -36,10 +35,10 @@ class Graph extends mxGraph {
   }
 
   static convertStyleToString(styleDict) {
-    let style = Object.entries(styleDict)
+    const style = Object.entries(styleDict)
       .map(([key, value]) => `${key}=${value}`)
-      .join(';');
-    style = style.replace(/=undefined/g, '');
+      .join(';')
+      .replace(/=undefined/g, '');
     return `${style};`;
   }
 
@@ -226,9 +225,6 @@ class Graph extends mxGraph {
       new mxConnectionConstraint(new mxPoint(0.25, 1), true),
       new mxConnectionConstraint(new mxPoint(0.5, 1), true),
       new mxConnectionConstraint(new mxPoint(0.75, 1), true)];
-
-    // Edges have no connection points
-    mxPolyline.prototype.constraints = null;
   }
 
   _configCustomEvent() {
