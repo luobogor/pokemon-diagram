@@ -24,7 +24,7 @@ Object.assign(mxEvent, {
   VERTEX_START_MOVE: 'vertexStartMove',
 });
 
-class Graph extends mxGraph {
+export class Graph extends mxGraph {
   static getStyleDict(cell) {
     return _.compact(cell.getStyle().split(';'))
       .reduce((acc, item) => {
@@ -40,6 +40,10 @@ class Graph extends mxGraph {
       .join(';')
       .replace(/=undefined/g, '');
     return `${style};`;
+  }
+
+  static getCellPosition(cell) {
+    return _.pick(cell.getGeometry(), ['x', 'y']);
   }
 
   constructor(container) {
@@ -97,9 +101,9 @@ class Graph extends mxGraph {
     this.setCellsResizable(false);
     this.setAllowLoops(false);
 
-    // 编辑时回车不换行，变成完成输入
+    // 编辑时按回车键不换行，而是完成输入
     this.setEnterStopsCellEditing(true);
-    // 按 escape 后完成输入
+    // 编辑时按 escape 后完成输入
     mxCellEditor.prototype.escapeCancelsEditing = false;
     // 失焦时完成输入
     mxCellEditor.prototype.blurEnabled = true;
@@ -172,12 +176,12 @@ class Graph extends mxGraph {
   _setDefaultEdgeStyle() {
     const style = this.getStylesheet().getDefaultEdgeStyle();
     Object.assign(style, {
-      [mxConstants.STYLE_ROUNDED]: true,
+      [mxConstants.STYLE_ROUNDED]: true, // 设置线条拐弯处为圆角
       [mxConstants.STYLE_STROKEWIDTH]: '2',
       [mxConstants.STYLE_STROKECOLOR]: '#333333',
       [mxConstants.STYLE_EDGE]: mxConstants.EDGESTYLE_ORTHOGONAL,
-      [mxConstants.STYLE_FONTCOLOR]: '#333333',
-      [mxConstants.STYLE_LABEL_BACKGROUNDCOLOR]: '#ffffff',
+      [mxConstants.STYLE_FONTCOLOR]: '#33333',
+      [mxConstants.STYLE_LABEL_BACKGROUNDCOLOR]: '#ffa94d',
     });
     // TODO 标注demo 出处
     // 设置拖拽线的过程出现折线，默认为直线
@@ -229,9 +233,9 @@ class Graph extends mxGraph {
 
   _configCustomEvent() {
     const graph = this;
-    const drawPreview = mxEdgeHandler.prototype.start;
+    const oldStart = mxEdgeHandler.prototype.start;
     mxEdgeHandler.prototype.start = function start(...args) {
-      drawPreview.apply(this, args);
+      oldStart.apply(this, args);
       graph.fireEvent(new mxEventObject(mxEvent.EDGE_START_MOVE,
         'edge', this.state.cell,
         'source', this.isSource,

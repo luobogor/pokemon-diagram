@@ -5,7 +5,7 @@ export const elements = [{
 }, {
   id: 1,
   icon: 'ele-001.jpeg',
-  title: '比卡丘',
+  title: '我是比卡丘的超级超级进化',
 }, {
   id: 2,
   icon: 'ele-002.png',

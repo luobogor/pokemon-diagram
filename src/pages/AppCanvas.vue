@@ -100,7 +100,7 @@
 import FileSaver from 'file-saver';
 import Panel from 'components/Panel';
 import mxgraph from '../graph/index';
-import { genGraph, destroyGraph } from '../graph/Graph';
+import { genGraph, destroyGraph, Graph } from '../graph/Graph';
 import EdgePanel from './components/EdgePanel';
 import { elements, normalTypeOptions } from '../common/data';
 
@@ -140,7 +140,7 @@ const makeDraggable = (sourceEles) => {
     const src = source.getAttribute('src');
     const id = Number(source.getAttribute('id'));
 
-    const nodeRootVertex = new mxCell('Name', new mxGeometry(0, 0, 100, 135), `node;image=${src}`);
+    const nodeRootVertex = new mxCell('鼠标双击输入', new mxGeometry(0, 0, 100, 135), `node;image=${src}`);
     nodeRootVertex.vertex = true;
     // 初始化业务数据
     nodeRootVertex.data = {
@@ -161,10 +161,16 @@ const makeDraggable = (sourceEles) => {
       true);
     normalTypeVertex.setConnectable(false);
 
+    // 插入节点方法1，此方法会触发 xx xxx
     const cells = graph.importCells([nodeRootVertex], x, y, target);
     if (cells != null && cells.length > 0) {
       graph.setSelectionCells(cells);
     }
+
+    // 插入节点方法2
+    // const parent = graph.getDefaultParent();
+    // graph.addCell(nodeRootVertex, parent);
+    // graph.setSelectionCell(nodeRootVertex);
   };
 
   Array.from(sourceEles).forEach((ele) => {
@@ -310,6 +316,31 @@ export default {
       graph.getSelectionModel().addListener(mxEvent.CHANGE, this.handleSelectionChange);
       graph.addListener(mxEvent.NORMAL_TYPE_CLICKED, this.showNormalTypeSelect);
       graph.addListener(mxEvent.VERTEX_START_MOVE, this.hideTypeSelect);
+
+      const vm = this;
+      graph.addListener(mxEvent.MOVE_CELLS, (sender, evt) => {
+        const cell = evt.properties.cells[0];
+        const position = Graph.getCellPosition(cell);
+        setTimeout(() => {
+          vm.$message.info(`节点被移动到 ${JSON.stringify(position)}`);
+        }, 1000);
+      });
+
+      graph.addListener(mxEvent.CELLS_ADDED, (sender, evt) => {
+        const cell = evt.properties.cells[0];
+        if (graph.isPart(cell)) {
+          return;
+        }
+
+        if (cell.vertex) {
+          this.$message.info('添加了一个节点');
+        } else if (cell.edge) {
+          this.$message.info('添加了一条线');
+        }
+      });
+      graph.addListener(mxEvent.LABEL_CHANGED, (sender, evt) => {
+        vm.$message.info(`内容改变为：${evt.getProperty('value')}`);
+      });
     }
   },
 
