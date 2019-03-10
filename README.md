@@ -1,15 +1,28 @@
+todo 添加一张截图
+
+本项目是作为 xxx 的实战教学项目
+
+## 安装 & 运行
+
+``` bash
+# 安装
+npm install
+
+# 运行
+npm start
+```
+
 ## 功能
 
-- 在元素上修改属性、名称
-- 线条修改样式
-- 级联删除
-- 导出、导入
+- 从面板拖拽元素加入到画布
+- 在节点上修改属性、名称
+- 在右侧面板修改线条样式，包括线形、粗细、颜色
+- 删除线条、节点级联删除
+- 导出、导入图形
 - 自动布局
 - 导航器
-
-## 已知问题
-- 颜色要用标准6位，不要用3位
-- 左上边界搞不定
+- 节点连接校验，规定“智爷”节点只能与“皮卡超”节点连接
+- 导出 PNG（仅提供前端代码与后台代码）
 
 ## 常用 API
 _configCustomEvent
@@ -19,18 +32,8 @@ _configCustomEvent
       const NormalTypeVertex = evt.getProperty('cell');
       const state = graph.view.getState(NormalTypeVertex);
       const dom = state.shape.node;
-    },
+    }
 ```
-
-_configConstituent
-
-setStyle
-
-按功能点讲解
-
-
-
-
 
 靠谱的站点
 

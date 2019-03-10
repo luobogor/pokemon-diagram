@@ -249,6 +249,7 @@ export default {
     // File
     //*******
     exportFile() {
+      console.log(graph.getModel());
       const xml = graph.exportModelXML();
       const blob = new Blob([xml], { type: "text/plain;charset=utf-8" });
       FileSaver.saveAs(blob, "pocket_monster.xml");
