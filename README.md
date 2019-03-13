@@ -1,15 +1,18 @@
 todo 添加一张截图
 
-本项目是作为 xxx 的实战教学项目
+本项目是作为 xxx 的实战教学项目，使用 mxGraph、Vue 做一个宠物小精灵人物展示图谱
 
-## 安装 & 运行
+## 运行
 
 ``` bash
-# 安装
+# 安装依赖
 npm install
 
-# 运行
+# 启动
 npm start
+
+# 访问
+http://localhost:7777
 ```
 
 ## 功能

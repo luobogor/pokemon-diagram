@@ -120,6 +120,42 @@ Object.assign(mxEvent, {
 let graph = null;
 let outline = null;
 
+const insertVertex = (dom) => {
+  const src = dom.getAttribute('src');
+  const id = Number(dom.getAttribute('id'));
+  const nodeRootVertex = new mxCell('鼠标双击输入', new mxGeometry(0, 0, 100, 135), `node;image=${src}`);
+  nodeRootVertex.vertex = true;
+  // 初始化业务数据
+  nodeRootVertex.data = {
+    element: elements.find((element) => element.id === id),
+    normalType: '',
+  };
+
+  const title = dom.getAttribute('alt');
+  const titleVertex = graph.insertVertex(nodeRootVertex, null, title,
+    0.1, 0.65, 80, 16,
+    'constituent=1;whiteSpace=wrap;strokeColor=none;fillColor=none;fontColor=#e6a23c',
+    true);
+  titleVertex.setConnectable(false);
+
+  const normalTypeVertex = graph.insertVertex(nodeRootVertex, null, null,
+    0.05, 0.05, 19, 14,
+    `normalType;constituent=1;fillColor=none;image=/static/images/normal-type/forest.png`,
+    true);
+  normalTypeVertex.setConnectable(false);
+
+  // 插入节点方法1，此方法会触发 xx xxx
+  const cells = graph.importCells([nodeRootVertex], x, y, target);
+  if (cells != null && cells.length > 0) {
+    graph.setSelectionCells(cells);
+  }
+
+  // 插入节点方法2
+  // const parent = graph.getDefaultParent();
+  // graph.addCell(nodeRootVertex, parent);
+  // graph.setSelectionCell(nodeRootVertex);
+};
+
 const makeDraggable = (sourceEles) => {
   const dropValidate = function (evt) {
     const x = mxEvent.getClientX(evt);
@@ -136,41 +172,7 @@ const makeDraggable = (sourceEles) => {
 
   // drop成功后新建一个节点
   const dropSuccessCb = function (_graph, evt, target, x, y) {
-    const source = this.element;
-    const src = source.getAttribute('src');
-    const id = Number(source.getAttribute('id'));
-
-    const nodeRootVertex = new mxCell('鼠标双击输入', new mxGeometry(0, 0, 100, 135), `node;image=${src}`);
-    nodeRootVertex.vertex = true;
-    // 初始化业务数据
-    nodeRootVertex.data = {
-      element: elements.find((element) => element.id === id),
-      normalType: '',
-    };
-
-    const title = source.getAttribute('alt');
-    const titleVertex = graph.insertVertex(nodeRootVertex, null, title,
-      0.1, 0.65, 80, 16,
-      'constituent=1;whiteSpace=wrap;strokeColor=none;fillColor=none;fontColor=#e6a23c',
-      true);
-    titleVertex.setConnectable(false);
-
-    const normalTypeVertex = graph.insertVertex(nodeRootVertex, null, null,
-      0.05, 0.05, 19, 14,
-      `normalType;constituent=1;fillColor=none;image=/static/images/normal-type/forest.png`,
-      true);
-    normalTypeVertex.setConnectable(false);
-
-    // 插入节点方法1，此方法会触发 xx xxx
-    const cells = graph.importCells([nodeRootVertex], x, y, target);
-    if (cells != null && cells.length > 0) {
-      graph.setSelectionCells(cells);
-    }
-
-    // 插入节点方法2
-    // const parent = graph.getDefaultParent();
-    // graph.addCell(nodeRootVertex, parent);
-    // graph.setSelectionCell(nodeRootVertex);
+    insertVertex(this.element);
   };
 
   Array.from(sourceEles).forEach((ele) => {
@@ -313,10 +315,14 @@ export default {
       }
     },
     _listenEvent() {
-      // TODO 为什么 change 事件如果使用箭头函数 this 竟然是 selectModel 而不是 vm
-      graph.getSelectionModel().addListener(mxEvent.CHANGE, this.handleSelectionChange);
+      // 监听自定义事件
       graph.addListener(mxEvent.NORMAL_TYPE_CLICKED, this.showNormalTypeSelect);
       graph.addListener(mxEvent.VERTEX_START_MOVE, this.hideTypeSelect);
+
+
+      // 监听 mxGraph 事件
+      const mxGraphSelectionModel = graph.getSelectionModel();
+      mxGraphSelectionModel.addListener(mxEvent.CHANGE, this.handleSelectionChange);
 
       const vm = this;
       graph.addListener(mxEvent.MOVE_CELLS, (sender, evt) => {
@@ -339,9 +345,12 @@ export default {
           this.$message.info('添加了一条线');
         }
       });
+
       graph.addListener(mxEvent.LABEL_CHANGED, (sender, evt) => {
         vm.$message.info(`内容改变为：${evt.getProperty('value')}`);
       });
+
+      // todo 添加 connect 事件
     }
   },
 

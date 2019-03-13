@@ -303,6 +303,7 @@ export class Graph extends mxGraph {
     xmlDoc.appendChild(root);
 
     const { scale } = this.view;
+    // 这个项目画布边宽为0，可以自行进行调整
     const border = 0;
 
     const bounds = this.getGraphBounds();
