@@ -29,6 +29,12 @@
           :disabled="_.isEmpty(selectVertex) && _.isEmpty(selectEdge)">
           删除
         </ElButton>
+        <ElButton
+          @click="exportPic"
+          type="text"
+          size="mini">
+          导出图片
+        </ElButton>
       </div>
       <div id="graphContainer">
         <ElSelect
@@ -120,7 +126,7 @@ Object.assign(mxEvent, {
 let graph = null;
 let outline = null;
 
-const insertVertex = (dom) => {
+const insertVertex = (dom, target, x, y) => {
   const src = dom.getAttribute('src');
   const id = Number(dom.getAttribute('id'));
   const nodeRootVertex = new mxCell('鼠标双击输入', new mxGeometry(0, 0, 100, 135), `node;image=${src}`);
@@ -172,7 +178,7 @@ const makeDraggable = (sourceEles) => {
 
   // drop成功后新建一个节点
   const dropSuccessCb = function (_graph, evt, target, x, y) {
-    insertVertex(this.element);
+    insertVertex(this.element, target, x, y);
   };
 
   Array.from(sourceEles).forEach((ele) => {
@@ -247,6 +253,11 @@ export default {
   },
 
   methods: {
+    exportPic() {
+      const data = graph.exportPicXML();
+      console.log(data);
+      // 发送 data 到服务端 ....
+    },
     //*******
     // File
     //*******
@@ -308,6 +319,10 @@ export default {
       }
 
       const cell = selectModel.cells[0];
+      // 另一种获取当前节点的方法
+      const selectionCell = graph.getSelectionCell();
+      console.log(selectionCell === cell); // true
+
       if (cell.vertex) {
         this.selectVertex = cell;
       } else {

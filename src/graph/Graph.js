@@ -54,8 +54,11 @@ export class Graph extends mxGraph {
   }
 
   _init() {
+    this._setDefaultConfig();
     this._configConstituent();
-    this._setDefaultStyle();
+    this._putVertexStyle();
+    this._setDefaultEdgeStyle();
+    this._setAnchors();
     this._configCustomEvent();
   }
 
@@ -85,14 +88,6 @@ export class Graph extends mxGraph {
 
       return cell;
     };
-  }
-
-  _setDefaultStyle() {
-    // TODO
-    this._setDefaultVertexStyle();
-    this._setDefaultEdgeStyle();
-    this._setDefaultConfig();
-    this._setAnchors();
   }
 
   _setDefaultConfig() {
@@ -130,7 +125,7 @@ export class Graph extends mxGraph {
     mxGraph.prototype.edgeLabelsMovable = false;
   }
 
-  _setDefaultVertexStyle() {
+  _putVertexStyle() {
     const normalTypeStyle = {
       [mxConstants.STYLE_SHAPE]: mxConstants.SHAPE_IMAGE,
       [mxConstants.STYLE_PERIMETER]: mxPerimeter.RectanglePerimeter,
@@ -320,7 +315,7 @@ export class Graph extends mxGraph {
     const w = Math.ceil(bounds.width * scale / scale + 2 * border);
     const h = Math.ceil(bounds.height * scale / scale + 2 * border);
 
-    const xml = mxUtils.getXml(root);
+    const xml = mxUtils.getPrettyXml(root);
 
     return {
       xml,
