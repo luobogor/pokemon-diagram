@@ -23,6 +23,12 @@
           导出
         </ElButton>
         <ElButton
+          @click="logXML"
+          type="text"
+          size="mini">
+          输出XML
+        </ElButton>
+        <ElButton
           type="text"
           size="mini"
           @click="del"
@@ -216,14 +222,22 @@ const setCursor = () => {
 };
 
 const setConnectValidation = () => {
-  // // 初次连接边校验
-  // mxConnectionHandler.prototype.validateConnection = (source, target) => {
-  //
-  // };
-  // // 二次连接边校验
-  // mxGraph.prototype.isValidConnection = (source, target) => {
-  //
-  // };
+  // 连接边校验
+  mxGraph.prototype.isValidConnection = (source, target) => {
+    const sourceElementId = source.data.element.id;
+    const targetElementId = target.data.element.id;
+    // 如果源点是智爷，终点必须是 皮卡丘 或 我是皮卡丘的超级超级进化
+    if (sourceElementId === 1) {
+      return targetElementId === 2 || targetElementId === 3;
+    }
+
+    // 如果终点是智爷同理
+    if (targetElementId === 1) {
+      return sourceElementId === 2 || sourceElementId === 3;
+    }
+
+    return true;
+  };
 };
 
 const initGraph = () => {
@@ -277,11 +291,15 @@ export default {
       // 服务端如果是使用 Java 可以参考官方这例子
       // https://github.com/jgraph/mxgraph/blob/master/java/test/com/mxgraph/test/mxImageExportTest.java
     },
+    logXML() {
+      this.$message.info('已经输出，请在控制台查看');
+      const xml = graph.exportModelXML();
+      console.log(xml);
+    },
     //*******
     // File
     //*******
     exportFile() {
-      console.log(graph.getModel());
       const xml = graph.exportModelXML();
       const blob = new Blob([xml], { type: "text/plain;charset=utf-8" });
       FileSaver.saveAs(blob, "pocket_monster.xml");
