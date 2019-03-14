@@ -96,7 +96,6 @@ export class Graph extends mxGraph {
 
     // 固定节点大小
     this.setCellsResizable(false);
-    this.setAllowLoops(false);
 
     // 编辑时按回车键不换行，而是完成输入
     this.setEnterStopsCellEditing(true);

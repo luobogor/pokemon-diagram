@@ -111,12 +111,14 @@ import EdgePanel from './components/EdgePanel';
 import { elements, normalTypeOptions } from '../common/data';
 
 const {
+  mxGraph,
   mxOutline,
   mxEvent,
   mxCell,
   mxGeometry,
   mxUtils,
   mxEventObject,
+  mxConnectionHandler,
 } = mxgraph;
 
 Object.assign(mxEvent, {
@@ -201,9 +203,24 @@ const listenGraphEvent = () => {
 };
 
 const setCursor = () => {
-  graph.getCursorForCell = (cell) => {
-    return cell.style.includes('normalType') ? 'pointer' : 'default';
+  const oldGetCursorForCell = mxGraph.prototype.getCursorForCell;
+  graph.getCursorForCell = function (...args) {
+    const [cell] = args;
+    return cell.style.includes('normalType') ?
+      'pointer' :
+      oldGetCursorForCell.apply(this, args);
   };
+};
+
+const setConnectValidation = () => {
+  // // 初次连接边校验
+  // mxConnectionHandler.prototype.validateConnection = (source, target) => {
+  //
+  // };
+  // // 二次连接边校验
+  // mxGraph.prototype.isValidConnection = (source, target) => {
+  //
+  // };
 };
 
 const initGraph = () => {
@@ -214,6 +231,7 @@ const initGraph = () => {
   makeDraggable(document.getElementsByClassName('element-img'));
   listenGraphEvent();
   setCursor();
+  setConnectValidation();
 };
 
 
@@ -253,6 +271,8 @@ export default {
       const data = graph.exportPicXML();
       console.log(data);
       // 发送 data 到服务端 ....
+      // 服务端如果是使用 Java 可以参考官方这例子
+      // https://github.com/jgraph/mxgraph/blob/master/java/test/com/mxgraph/test/mxImageExportTest.java
     },
     //*******
     // File
@@ -362,7 +382,9 @@ export default {
         vm.$message.info(`内容改变为：${evt.getProperty('value')}`);
       });
 
-      // todo 添加 connect 事件
+      graph.addListener(mxEvent.CONNECT_CELL, (sender, evt) => {
+        vm.$message.info(`改变了连线`);
+      });
     }
   },
 
