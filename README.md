@@ -2,7 +2,7 @@
 
 ![](https://ws2.sinaimg.cn/large/006tKfTcgy1g12o6tm578j316j0pmgs4.jpg)
 
-本项目是作为 《mxGraph 入门实例教程》 的实战教学项目，使用 mxGraph、Vue 做一个宠物小精灵人物展示图谱
+本项目是作为 [《mxGraph 入门实例教程》](https://segmentfault.com/a/1190000018510996#articleHeader0) 的实战教学项目，使用 mxGraph、Vue 做一个宠物小精灵人物展示图谱
 
 ## 运行
 

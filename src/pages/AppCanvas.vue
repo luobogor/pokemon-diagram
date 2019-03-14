@@ -295,10 +295,13 @@ export default {
       this.$message.info('已经输出，请在控制台查看');
       const xml = graph.exportModelXML();
       console.log(xml);
+      console.log('mode:', graph.getModel());
     },
     //*******
     // File
     //*******
+    // 导出、导入功能参考这个例子
+    // https://github.com/jgraph/mxgraph/blob/master/javascript/examples/fileio.html
     exportFile() {
       const xml = graph.exportModelXML();
       const blob = new Blob([xml], { type: "text/plain;charset=utf-8" });
