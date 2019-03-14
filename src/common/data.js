@@ -1,5 +1,5 @@
 export const elements = [{
-  key: 1,
+  id: 1,
   icon: 'ele-005.png',
   title: '智爷',
 }, {

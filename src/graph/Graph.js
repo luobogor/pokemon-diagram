@@ -16,15 +16,28 @@ const {
   mxPoint,
   mxEventObject,
   mxCodec,
+  mxObjectCodec,
   mxUtils,
   mxImageExport,
   mxXmlCanvas2D,
+  mxCodecRegistry,
 } = mxgraph;
 
 Object.assign(mxEvent, {
   EDGE_START_MOVE: 'edgeStartMove',
   VERTEX_START_MOVE: 'vertexStartMove',
 });
+
+let pokeElementIdSeed = 0;
+
+// export class PokeElement {
+//   constructor(element) {
+//     this.id = pokeElementIdSeed;
+//     pokeElementIdSeed++;
+//     this.element = element;
+//     this.normalType = '';
+//   }
+// }
 
 export class Graph extends mxGraph {
   static getStyleDict(cell) {
@@ -60,6 +73,7 @@ export class Graph extends mxGraph {
     this._setDefaultEdgeStyle();
     this._setAnchors();
     this._configCustomEvent();
+    // this._configCoder();
   }
 
   _configConstituent() {
@@ -246,6 +260,27 @@ export class Graph extends mxGraph {
     };
   }
 
+
+  _configCoder() {
+    const codec = new mxObjectCodec(new PokeElement());
+
+    codec.encode = function (enc, obj) {
+      const node = enc.document.createElement('PokeElement');
+      mxUtils.setTextContent(node, JSON.stringify(obj));
+
+      return node;
+    };
+
+    codec.decode = function (dec, node, into) {
+      const obj = JSON.parse(mxUtils.getTextContent(node));
+      obj.constructor = PokeElement;
+
+      return obj;
+    };
+
+    mxCodecRegistry.register(codec);
+  }
+
   getDom(cell) {
     const state = this.view.getState(cell);
     return state.shape.node;
@@ -273,6 +308,28 @@ export class Graph extends mxGraph {
     this.removeCells(cells);
   }
 
+
+  _restoreModel() {
+    Object.values(this.getModel().cells)
+      .forEach(cell => {
+        if (cell.vertex && cell.data) {
+          cell.data = JSON.parse(cell.data);
+        }
+      });
+  }
+
+  // 将 data 变为字符串，否则还原时会报错
+  _getExportModel() {
+    const model = _.cloneDeep(this.getModel());
+    Object.values(model.cells)
+      .forEach(cell => {
+        if (cell.vertex && cell.data) {
+          cell.data = JSON.stringify(cell.data);
+        }
+      });
+    return model;
+  }
+
   importModelXML(xmlTxt) {
     this.getModel().beginUpdate();
     try {
@@ -283,11 +340,14 @@ export class Graph extends mxGraph {
     } finally {
       this.getModel().endUpdate();
     }
+    this._restoreModel();
+    console.log(this.getModel());
+    debugger;
   }
 
   exportModelXML() {
     const enc = new mxCodec(mxUtils.createXmlDocument());
-    const node = enc.encode(this.getModel());
+    const node = enc.encode(this._getExportModel());
     return mxUtils.getPrettyXml(node);
   }
 

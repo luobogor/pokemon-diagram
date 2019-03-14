@@ -127,14 +127,17 @@ Object.assign(mxEvent, {
 
 let graph = null;
 let outline = null;
+let idSeed = 0;
 
 const insertVertex = (dom, target, x, y) => {
   const src = dom.getAttribute('src');
   const id = Number(dom.getAttribute('id'));
   const nodeRootVertex = new mxCell('鼠标双击输入', new mxGeometry(0, 0, 100, 135), `node;image=${src}`);
   nodeRootVertex.vertex = true;
-  // 初始化业务数据
+  // 自定义的业务数据放在 data 属性
+  idSeed++;
   nodeRootVertex.data = {
+    id: idSeed,
     element: elements.find((element) => element.id === id),
     normalType: '',
   };
