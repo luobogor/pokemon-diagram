@@ -150,16 +150,10 @@ const insertVertex = (dom, target, x, y) => {
     true);
   normalTypeVertex.setConnectable(false);
 
-  // 插入节点方法1，此方法会触发 xx xxx
   const cells = graph.importCells([nodeRootVertex], x, y, target);
   if (cells != null && cells.length > 0) {
     graph.setSelectionCells(cells);
   }
-
-  // 插入节点方法2
-  // const parent = graph.getDefaultParent();
-  // graph.addCell(nodeRootVertex, parent);
-  // graph.setSelectionCell(nodeRootVertex);
 };
 
 const makeDraggable = (sourceEles) => {
@@ -215,6 +209,8 @@ const setCursor = () => {
 const initGraph = () => {
   graph = genGraph(document.getElementById('graphContainer'));
   outline = new mxOutline(graph, document.getElementById('graphOutline'));
+  // 将外元素拖拽进画布参考这个例子
+  // https://github.com/jinzhanye/mxgraph-demos/blob/master/src/07.drag.html
   makeDraggable(document.getElementsByClassName('element-img'));
   listenGraphEvent();
   setCursor();
@@ -319,9 +315,10 @@ export default {
       }
 
       const cell = selectModel.cells[0];
+
       // 另一种获取当前节点的方法
-      const selectionCell = graph.getSelectionCell();
-      console.log(selectionCell === cell); // true
+      // const selectionCell = graph.getSelectionCell();
+      // console.log(selectionCell === cell); // true
 
       if (cell.vertex) {
         this.selectVertex = cell;

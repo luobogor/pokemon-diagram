@@ -3,9 +3,13 @@ export const elements = [{
   icon: 'ele-005.png',
   title: '智爷',
 }, {
+  id: 6,
+  icon: 'ele-006.jpg',
+  title: '皮卡丘',
+}, {
   id: 1,
   icon: 'ele-001.jpeg',
-  title: '我是比卡丘的超级超级进化',
+  title: '我是皮卡丘的超级超级进化',
 }, {
   id: 2,
   icon: 'ele-002.png',

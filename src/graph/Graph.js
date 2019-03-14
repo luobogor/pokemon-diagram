@@ -133,7 +133,8 @@ export class Graph extends mxGraph {
     this.getStylesheet().putCellStyle('normalType', normalTypeStyle);
 
     const nodeStyle = {
-      // TODO 标注在哪个 example 可以找到
+      // 图片样式参考这个例子
+      // https://github.com/jinzhanye/mxgraph-demos/blob/master/src/06.image.html
       [mxConstants.STYLE_SHAPE]: mxConstants.SHAPE_LABEL,
       [mxConstants.STYLE_PERIMETER]: mxPerimeter.RectanglePerimeter,
       [mxConstants.STYLE_ROUNDED]: true,
@@ -180,7 +181,6 @@ export class Graph extends mxGraph {
       [mxConstants.STYLE_FONTCOLOR]: '#33333',
       [mxConstants.STYLE_LABEL_BACKGROUNDCOLOR]: '#ffa94d',
     });
-    // TODO 标注demo 出处
     // 设置拖拽线的过程出现折线，默认为直线
     this.connectionHandler.createEdgeState = () => {
       const edge = this.createEdge();
