@@ -1,7 +1,7 @@
 {
   "name": "pokemon-diagram",
   "version": "1.0.0",
-  "description": "A Vue.js project",
+  "description": "A  mxGraph tutorial project",
   "author": "jinzhanye <jinzhan.ye@foxmail.com>",
   "private": true,
   "scripts": {
