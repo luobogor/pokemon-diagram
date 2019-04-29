@@ -341,8 +341,6 @@ export class Graph extends mxGraph {
       this.getModel().endUpdate();
     }
     this._restoreModel();
-    console.log(this.getModel());
-    debugger;
   }
 
   exportModelXML() {
