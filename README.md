@@ -4,6 +4,10 @@
 
 本项目作为[《mxGraph 入门实例教程》](https://segmentfault.com/a/1190000018510996#articleHeader0)的实战教学项目，使用 mxGraph、Vue 做一个宠物小精灵人物展示图谱。
 
+## 在线演示
+
+[点我访问](http://47.100.112.217/)
+
 ## 运行
 
 ``` bash
