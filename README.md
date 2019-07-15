@@ -6,7 +6,7 @@
 
 ## 在线演示
 
-[点我访问](http://47.100.112.217/)
+[点我访问](http://www.yejinzhan.top/mxgraph-demos)
 
 ## 运行
 
